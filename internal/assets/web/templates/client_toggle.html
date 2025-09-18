@@ -1,0 +1,18 @@
+{{$enabled := false}}
+{{if .server.Clients}}
+    {{if index .server.Clients .client}}
+        {{$enabled = index .server.Clients .client}}
+    {{end}}
+{{end}}
+
+<label class="inline-flex items-center">
+    <input type="checkbox"
+           class="form-checkbox h-5 w-5 text-green-600"
+           {{if $enabled}}checked{{end}}
+           hx-post="/htmx/clients/{{.client}}/servers/{{.server.Name}}/toggle"
+           hx-vals='{"enabled": "{{if $enabled}}false{{else}}true{{end}}"}'
+           hx-target="#client-{{.client}}-server-{{.server.Name}}"
+           hx-swap="innerHTML"
+           hx-trigger="click"
+           _="on htmx:afterRequest trigger configChanged on body">
+</label>

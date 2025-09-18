@@ -1,0 +1,83 @@
+project_name: mcp-server-manager
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - main: ./cmd/server
+    binary: mcp-server-manager
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - format_overrides:
+      - goos: windows
+        format: zip
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README.md
+      - LICENSE*
+      - configs/config.yaml
+      - systemd/mcp-server-manager.service
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+nfpms:
+  - id: packages
+    package_name: mcp-server-manager
+    vendor: MCP Server Manager
+    homepage: https://github.com/vlazic/mcp-server-manager
+    maintainer: Vladimir Lazic <contact@vlazic.com>
+    description: |-
+      Centralized management of Model Context Protocol (MCP) servers across multiple AI clients.
+      Provides a single YAML configuration file and web interface to manage MCP servers
+      for Claude Code, Gemini CLI, and other MCP-compatible clients.
+    license: MIT
+    formats:
+      - deb
+    dependencies:
+      - systemd
+    suggests:
+      - nodejs
+      - npm
+    contents:
+      - src: ./systemd/mcp-server-manager.service
+        dst: /usr/lib/systemd/user/mcp-server-manager.service
+    bindir: /usr/local/bin
+    scripts:
+      postinstall: "scripts/postinstall.sh"
+
+release:
+  github:
+    owner: vlazic
+    name: mcp-server-manager
+  name_template: "{{.ProjectName}} v{{.Version}}"

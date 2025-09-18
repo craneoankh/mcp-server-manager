@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server Manager</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="/static/prism.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">MCP Server Manager</h1>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-700">MCP Servers</h2>
+                <button
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    hx-post="/api/sync"
+                    hx-trigger="click"
+                    hx-confirm="Sync all client configurations?"
+                    hx-swap="none"
+                    _="on htmx:afterRequest trigger configChanged on body">
+                    Sync All Clients
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Server Name</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Command</th>
+                            <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">Global</th>
+                            {{range .clients}}
+                            <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">{{.Name}}</th>
+                            {{end}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .servers}}
+                        <tr id="server-{{.Name}}" class="border-t">
+                            {{template "server_row.html" dict "server" . "clients" $.clients}}
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Configuration Viewer</h2>
+
+            <!-- App Config -->
+            <details class="mb-4 border border-gray-200 rounded">
+                <summary class="bg-gray-50 px-4 py-3 cursor-pointer hover:bg-gray-100 font-medium">
+                    📄 Application configuration
+                </summary>
+                <div class="p-4"
+                     id="app-config-content"
+                     hx-get="/config/app"
+                     hx-trigger="revealed, configChanged from:body"
+                     hx-target="this"
+                     hx-swap="innerHTML">
+                    Loading...
+                </div>
+            </details>
+
+            <!-- Client Configs -->
+            {{range .clients}}
+            <details class="mb-4 border border-gray-200 rounded">
+                <summary class="bg-gray-50 px-4 py-3 cursor-pointer hover:bg-gray-100 font-medium">
+                    🔧 {{.Name}} configuration ({{.ConfigPath}})
+                </summary>
+                <div class="p-4"
+                     id="{{.Name}}-config-content"
+                     hx-get="/config/client/{{.Name}}"
+                     hx-trigger="revealed, configChanged from:body"
+                     hx-target="this"
+                     hx-swap="innerHTML">
+                    Loading...
+                </div>
+            </details>
+            {{end}}
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">How It Works</h2>
+            <div class="prose max-w-none text-sm text-gray-600">
+                <p class="mb-3"><strong>MCP Server Manager</strong> centralizes control of Model Context Protocol servers across different AI clients.</p>
+
+                <h3 class="text-base font-semibold text-gray-700 mb-2">🎯 Controls</h3>
+                <ul class="list-disc list-inside mb-4 space-y-1">
+                    <li><strong>Global toggles:</strong> Enable/disable servers for all clients</li>
+                    <li><strong>Client-specific toggles:</strong> Override global settings per client</li>
+                    <li><strong>Sync button:</strong> Apply all configuration changes to client files</li>
+                </ul>
+
+                <h3 class="text-base font-semibold text-gray-700 mb-2">📝 Adding New Servers</h3>
+                <p class="mb-2">Edit <code>configs/config.yaml</code> and add new entries:</p>
+                <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mb-4"><code>mcp_servers:
+  - name: "your-server"
+    command: "npx"
+    args: ["@your/mcp-server"]
+    env:
+      API_KEY: "your-key"
+    enabled_globally: false
+    clients:
+      claude_code: true
+      gemini_cli: false</code></pre>
+
+                <h3 class="text-base font-semibold text-gray-700 mb-2">🔄 Workflow</h3>
+                <ol class="list-decimal list-inside space-y-1">
+                    <li>Toggle servers on/off using checkboxes</li>
+                    <li>Click "Sync All Clients" to apply changes</li>
+                    <li>Restart your AI clients to load new configurations</li>
+                    <li>Check config viewer above to verify changes</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/prism-core.js"></script>
+    <script src="/static/prism-yaml.js"></script>
+    <script src="/static/prism-json.js"></script>
+    <script>
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        });
+
+        // Re-highlight code after HTMX updates
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAllUnder(evt.detail.target);
+            }
+        });
+    </script>
+</body>
+</html>
