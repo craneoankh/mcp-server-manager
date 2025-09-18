@@ -2,8 +2,12 @@
 
 echo "MCP Server Manager installed successfully!"
 echo ""
-echo "To start the service:"
+echo "To start the service for your current session:"
 echo "  systemctl --user enable --now mcp-server-manager"
+echo ""
+echo "Optional: To make the service start automatically on boot (recommended for servers),"
+echo "run the following command:"
+echo "  sudo loginctl enable-linger \$USER"
 echo ""
 echo "Access the web interface at: http://localhost:6543"
 echo "Configuration will be auto-created on first run at ~/.config/mcp-server-manager/config.yaml"

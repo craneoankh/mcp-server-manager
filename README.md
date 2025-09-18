@@ -99,18 +99,6 @@ Edit this file to configure your MCP servers and client paths.
 ### Option 2: Edit Configuration File
 Manually edit `~/.config/mcp-server-manager/config.yaml` and restart the service.
 
-### Example Server Configuration
-```json
-{
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem", "/path/to/directory"]
-    }
-  }
-}
-```
-
 ## Example Configuration
 
 ```yaml
@@ -156,9 +144,14 @@ journalctl --user -u mcp-server-manager -f
 systemctl --user restart mcp-server-manager
 ```
 
-### Enable Auto-start on Boot
+### Optional: Making the Service Start on Boot (Before Login)
+
+By default, the user service starts automatically only *after* you log in. For most desktop users, this is sufficient.
+
+However, if you run this on a **headless or remote server**, you will want the service to start at boot, even before you log in via SSH. To enable this "lingering" behavior, run the following command once:
+
 ```bash
-# Enable lingering to start user services at boot
+# Allow the user service to start at boot, even without a login session
 sudo loginctl enable-linger $USER
 ```
 
