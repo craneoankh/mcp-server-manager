@@ -28,10 +28,15 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 - `make setup` - Complete production setup (build, install systemd user service, enable, start)
 - `make logs-service` - View systemd user service logs in real-time
 - `make status-service` - Check systemd user service status
+- `make sync-assets` - Sync web assets from web/ to internal/assets/web/ for embedding
+- `make test-release` - Build local .deb package, install, and restart service for testing
+- `make release VERSION=x.x.x` - Create git tag and trigger GitHub Actions release
 
 ### Release Commands
 
-- Create Git tag: `git tag v1.0.0 && git push origin v1.0.0`
+- `make test-release` - Build and test .deb package locally before release
+- `make release VERSION=v1.1.0` - Create official release with git tag and trigger GitHub Actions
+- `make sync-assets` - Sync web assets to embedded location (auto-included in build/release)
 - This triggers GitHub Actions to build cross-platform binaries via GoReleaser
 - Produces releases for Linux, macOS, Windows (amd64 + arm64)
 
@@ -106,6 +111,24 @@ The application operates on a **two-layer configuration model**:
 - Custom `configChanged` events trigger config viewer refreshes after any changes
 - Hyperscript handles event triggering after HTMX requests complete
 
+### Web Interface Features
+
+**Add New Servers via Web UI**:
+- Form-based server addition with JSON validation
+- Real-time validation for MCP client configuration format
+- Example configurations for STDIO, HTTP, SSE, and Context7 servers
+- Client-side validation before submission
+
+**Interactive Configuration Examples**:
+- Pre-built examples for common server types
+- One-click loading of example configurations
+- Supports all transport types (command, httpUrl, url)
+
+**Configuration Display**:
+- YAML config displayed in original format (not JSON conversion)
+- Real-time syntax highlighting with Prism.js
+- Auto-refresh after configuration changes
+
 ### Embedded Assets System
 
 **Production Build**:
@@ -138,7 +161,8 @@ The application operates on a **two-layer configuration model**:
 **Development Environment**:
 - Server runs on port 6543 (not 6543)
 - Development server runs in background - never run `make run` during development
-- Changes to templates require copying to `internal/assets/web/` for embedding
+- Changes to templates/static files require `make sync-assets` or are auto-synced during build
+- Use `make test-release` to test complete .deb package installation locally
 
 **Git Workflow**:
 - Use semantic commit messages: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`

@@ -12,6 +12,9 @@ Managing Model Context Protocol servers across multiple AI clients (Claude Code,
 ✅ **All Operating Systems** - Works on Linux, macOS, Windows
 ✅ **All MCP Clients** - Supports Claude Code, Gemini CLI, and more
 ✅ **GUI Interface** - Web interface starts with computer, always available on localhost:6543
+✅ **Add Servers via Web UI** - No need to edit configuration files manually
+✅ **Real-time Validation** - Instant feedback on configuration errors
+✅ **Example Configurations** - Built-in examples for common server types
 
 ## Installation Options
 
@@ -58,7 +61,7 @@ make setup
 
 ![MCP Server Manager Web Interface](./screenshot.png)
 
-*The web interface provides an intuitive way to manage MCP servers across multiple AI clients*
+*The web interface provides an intuitive way to manage and add MCP servers across multiple AI clients with real-time validation*
 
 ## Configuration
 
@@ -80,10 +83,33 @@ Edit this file to configure your MCP servers and client paths.
 
 ## How It Works
 
-1. **Configure once** - Configuration file is auto-created on first run
+1. **Configure once** - Add servers via web UI or edit the auto-created config file
 2. **Control from GUI** - Use the web interface to enable/disable servers per client
 3. **Automatic sync** - Changes are automatically applied to all client config files
 4. **Always available** - Runs in background, accessible at http://localhost:6543
+
+## Adding MCP Servers
+
+### Option 1: Via Web Interface (Recommended)
+1. Open http://localhost:6543
+2. Click "Add New Server"
+3. Choose from example configurations or enter your own
+4. Submit and the server is automatically added to your config
+
+### Option 2: Edit Configuration File
+Manually edit `~/.config/mcp-server-manager/config.yaml` and restart the service.
+
+### Example Server Configuration
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/path/to/directory"]
+    }
+  }
+}
+```
 
 ## Example Configuration
 
