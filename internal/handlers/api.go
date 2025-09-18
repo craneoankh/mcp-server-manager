@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vlazic/mcp-server-manager/internal/models"
 	"github.com/vlazic/mcp-server-manager/internal/services"
 )
 
@@ -85,4 +86,19 @@ func (h *APIHandler) SyncAllClients(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func (h *APIHandler) AddServer(c *gin.Context) {
+	var server models.MCPServer
+	if err := c.ShouldBindJSON(&server); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
+		return
+	}
+
+	if err := h.mcpManager.AddServer(&server); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "server": server})
 }

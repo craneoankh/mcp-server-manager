@@ -88,27 +88,63 @@ func createDefaultConfig(configPath string) error {
 
 	defaultConfig := `# MCP Server Manager Configuration
 # Edit this file to configure your MCP servers and clients
+# Full MCP specification support: STDIO, SSE, and HTTP transports
 
 server_port: 6543
 
 mcp_servers:
+  # STDIO Transport Example (most common)
   - name: "filesystem"
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
-    env: {}
+    env:
+      NODE_ENV: "production"
+    timeout: 30000  # 30 seconds
+    trust: false    # Set to true to bypass tool confirmations
     enabled_globally: false
     clients:
       claude_code: false
       gemini_cli: false
 
+  # HTTP Transport Example
   - name: "context7"
     http_url: "https://mcp.context7.com/mcp"
     headers:
       CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
+      Content-Type: "application/json"
+    timeout: 10000  # 10 seconds
     enabled_globally: false
     clients:
       claude_code: false
       gemini_cli: false
+
+  # SSE Transport Example (uncomment to use)
+  # - name: "sse_server"
+  #   url: "http://localhost:8080/sse"
+  #   headers:
+  #     Authorization: "Bearer YOUR_TOKEN"
+  #   timeout: 15000
+  #   enabled_globally: false
+  #   clients:
+  #     claude_code: false
+  #     gemini_cli: false
+
+  # Advanced STDIO Example with tool filtering
+  # - name: "git_server"
+  #   command: "npx"
+  #   args: ["@modelcontextprotocol/server-git", "--repository", "/path/to/repo"]
+  #   cwd: "/path/to/working/directory"
+  #   env:
+  #     GIT_AUTHOR_NAME: "MCP User"
+  #     GIT_AUTHOR_EMAIL: "user@example.com"
+  #   timeout: 45000
+  #   trust: false
+  #   include_tools: ["git_log", "git_diff", "git_show"]  # Only allow these tools
+  #   exclude_tools: ["git_push", "git_reset"]           # Block dangerous tools
+  #   enabled_globally: false
+  #   clients:
+  #     claude_code: false
+  #     gemini_cli: false
 
 clients:
   - name: "claude_code"
@@ -116,7 +152,17 @@ clients:
   - name: "gemini_cli"
     config_path: "~/.gemini/settings.json"
 
-# Add more MCP servers and clients as needed
+# Transport Types:
+# - STDIO (command + args): Most common, runs local processes
+# - HTTP (http_url + headers): For remote HTTP endpoints
+# - SSE (url + headers): For Server-Sent Events endpoints
+#
+# Security Options:
+# - trust: false (default) = Show confirmations for tool calls
+# - trust: true = Bypass all confirmations (use carefully!)
+# - include_tools: Whitelist specific tools only
+# - exclude_tools: Blacklist dangerous tools
+#
 # Restart the service after making changes: systemctl --user restart mcp-server-manager
 `
 

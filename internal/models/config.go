@@ -2,9 +2,25 @@ package models
 
 type MCPServer struct {
 	Name            string            `yaml:"name" json:"name"`
-	Command         string            `yaml:"command" json:"command"`
-	Args            []string          `yaml:"args" json:"args"`
-	Env             map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
+
+	// Transport Types (exactly one required)
+	Command         string            `yaml:"command,omitempty" json:"command,omitempty"`           // STDIO transport
+	URL             string            `yaml:"url,omitempty" json:"url,omitempty"`                   // SSE transport
+	HttpURL         string            `yaml:"http_url,omitempty" json:"httpUrl,omitempty"`         // HTTP transport
+
+	// Transport-specific properties
+	Args            []string          `yaml:"args,omitempty" json:"args,omitempty"`                // STDIO only
+	Cwd             string            `yaml:"cwd,omitempty" json:"cwd,omitempty"`                  // STDIO only
+	Headers         map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`          // HTTP/SSE only
+
+	// Common properties
+	Env             map[string]string `yaml:"env,omitempty" json:"env,omitempty"`                  // Environment variables
+	Timeout         int               `yaml:"timeout,omitempty" json:"timeout,omitempty"`          // Request timeout in ms
+	Trust           bool              `yaml:"trust,omitempty" json:"trust,omitempty"`              // Bypass confirmations
+	IncludeTools    []string          `yaml:"include_tools,omitempty" json:"includeTools,omitempty"` // Tool whitelist
+	ExcludeTools    []string          `yaml:"exclude_tools,omitempty" json:"excludeTools,omitempty"` // Tool blacklist
+
+	// Manager-specific properties
 	EnabledGlobally bool              `yaml:"enabled_globally" json:"enabled_globally"`
 	Clients         map[string]bool   `yaml:"clients" json:"clients"`
 }

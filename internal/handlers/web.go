@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -35,12 +36,14 @@ func (h *WebHandler) ToggleGlobalServerHTMX(c *gin.Context) {
 
 	enabled, err := strconv.ParseBool(enabledStr)
 	if err != nil {
-		c.String(http.StatusBadRequest, "Invalid enabled value")
+		errorHTML := renderGlobalToggleWithError(serverName, "Invalid enabled value: "+enabledStr)
+		c.Data(http.StatusBadRequest, "text/html", []byte(errorHTML))
 		return
 	}
 
 	if err := h.mcpManager.ToggleGlobalMCPServer(serverName, enabled); err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
+		errorHTML := renderGlobalToggleWithError(serverName, "Error: "+err.Error())
+		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
 		return
 	}
 
@@ -58,23 +61,61 @@ func (h *WebHandler) ToggleClientServerHTMX(c *gin.Context) {
 
 	enabled, err := strconv.ParseBool(enabledStr)
 	if err != nil {
-		c.String(http.StatusBadRequest, "Invalid enabled value: %s", enabledStr)
+		errorHTML := renderClientToggleWithError(clientName, serverName, "Invalid enabled value: "+enabledStr)
+		c.Data(http.StatusBadRequest, "text/html", []byte(errorHTML))
 		return
 	}
 
 	if err := h.mcpManager.ToggleClientMCPServer(clientName, serverName, enabled); err != nil {
-		c.String(http.StatusInternalServerError, "Error toggling server: %s", err.Error())
+		errorHTML := renderClientToggleWithError(clientName, serverName, "Error: "+err.Error())
+		c.Data(http.StatusBadRequest, "text/html", []byte(errorHTML))
 		return
 	}
 
 	server, err := h.mcpManager.GetServerStatus(serverName)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Error getting server status: %s", err.Error())
+		errorHTML := renderClientToggleWithError(clientName, serverName, "Error getting server status: "+err.Error())
+		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
 		return
 	}
 
+	// Success - return normal toggle with hidden error container
 	c.HTML(http.StatusOK, "client_toggle.html", gin.H{
 		"server": server,
 		"client": clientName,
 	})
+}
+
+// Helper functions for error handling
+
+func renderErrorBox(message string) string {
+	return fmt.Sprintf(`
+		<div class="text-red-600 text-sm font-medium p-2 bg-red-50 rounded border border-red-200">
+			%s
+		</div>
+	`, message)
+}
+
+func renderClientToggleWithError(clientName, serverName, errorMessage string) string {
+	errorContainer := fmt.Sprintf(`
+		<div id="error-%s-%s" class="mb-2">
+			%s
+		</div>
+	`, clientName, serverName, renderErrorBox(errorMessage))
+
+	// Simple checkbox (we can't easily render the full template here)
+	toggleHTML := `
+		<label class="inline-flex items-center">
+			<input type="checkbox"
+				   class="form-checkbox h-5 w-5 text-green-600"
+				   disabled
+				   title="Fix the error above to enable toggling">
+		</label>
+	`
+
+	return errorContainer + toggleHTML
+}
+
+func renderGlobalToggleWithError(serverName, errorMessage string) string {
+	return renderErrorBox(errorMessage)
 }

@@ -103,16 +103,30 @@ func (s *ClientConfigService) UpdateMCPServerStatus(clientName, serverName strin
 
 	if enabled {
 		// Create server config based on the original server definition
-		serverConfig := map[string]interface{}{
-			"command": server.Command,
+		serverConfig := map[string]interface{}{}
+
+		// Add transport type based on server configuration
+		if server.Command != "" {
+			// STDIO transport
+			serverConfig["command"] = server.Command
+			if len(server.Args) > 0 {
+				serverConfig["args"] = server.Args
+			}
+		} else if server.HttpURL != "" {
+			// HTTP transport
+			serverConfig["httpUrl"] = server.HttpURL
+		} else if server.URL != "" {
+			// SSE transport
+			serverConfig["url"] = server.URL
 		}
 
-		if len(server.Args) > 0 {
-			serverConfig["args"] = server.Args
-		}
-
+		// Add common fields
 		if len(server.Env) > 0 {
 			serverConfig["env"] = server.Env
+		}
+
+		if len(server.Headers) > 0 {
+			serverConfig["headers"] = server.Headers
 		}
 
 		clientConfig.MCPServers[serverName] = serverConfig

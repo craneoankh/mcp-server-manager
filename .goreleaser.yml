@@ -1,5 +1,4 @@
 project_name: mcp-server-manager
-version: 2
 
 before:
   hooks:
@@ -42,7 +41,7 @@ checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  version_template: "{{ incpatch .Version }}-next"
+  name_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc

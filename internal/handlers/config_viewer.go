@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/vlazic/mcp-server-manager/internal/config"
 	"github.com/vlazic/mcp-server-manager/internal/services"
 )
 
@@ -23,22 +23,17 @@ func NewConfigViewerHandler(mcpManager *services.MCPManagerService, configPath s
 }
 
 func (h *ConfigViewerHandler) GetAppConfig(c *gin.Context) {
-	cfg, _, err := config.LoadConfig(h.configPath)
+	// Read the raw YAML file content
+	yamlContent, err := os.ReadFile(h.configPath)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Error loading config: %s", err.Error())
-		return
-	}
-
-	configJson, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error marshaling config: %s", err.Error())
+		c.String(http.StatusInternalServerError, "Error reading config file: %s", err.Error())
 		return
 	}
 
 	c.HTML(http.StatusOK, "config_content.html", gin.H{
 		"title":    "Application Config",
-		"content":  string(configJson),
-		"language": "json",
+		"content":  string(yamlContent),
+		"language": "yaml",
 	})
 }
 

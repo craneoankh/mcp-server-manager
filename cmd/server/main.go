@@ -78,6 +78,7 @@ func main() {
 	api := r.Group("/api")
 	{
 		api.GET("/servers", apiHandler.GetMCPServers)
+		api.POST("/servers", apiHandler.AddServer)
 		api.GET("/clients", apiHandler.GetClients)
 		api.POST("/servers/:server/toggle", apiHandler.ToggleGlobalServer)
 		api.POST("/clients/:client/servers/:server/toggle", apiHandler.ToggleClientServer)

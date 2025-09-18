@@ -92,6 +92,35 @@ func (s *MCPManagerService) ValidateConfig() error {
 	return s.validator.ValidateConfig(s.config)
 }
 
+func (s *MCPManagerService) AddServer(server *models.MCPServer) error {
+	// Validate the server first
+	if err := s.validator.ValidateMCPServer(server); err != nil {
+		return fmt.Errorf("server validation failed: %w", err)
+	}
+
+	// Check if server with this name already exists
+	for _, existingServer := range s.config.MCPServers {
+		if existingServer.Name == server.Name {
+			return fmt.Errorf("server with name '%s' already exists", server.Name)
+		}
+	}
+
+	// Initialize clients map if not provided
+	if server.Clients == nil {
+		server.Clients = make(map[string]bool)
+		// Set all existing clients to false by default
+		for _, client := range s.config.Clients {
+			server.Clients[client.Name] = false
+		}
+	}
+
+	// Add the server to the config
+	s.config.MCPServers = append(s.config.MCPServers, *server)
+
+	// Save the config
+	return s.saveConfig()
+}
+
 func (s *MCPManagerService) saveConfig() error {
 	if err := s.ValidateConfig(); err != nil {
 		return fmt.Errorf("config validation failed: %w", err)

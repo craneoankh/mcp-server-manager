@@ -13,18 +13,80 @@
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold text-gray-800 mb-8">MCP Server Manager</h1>
 
+        <!-- How It Works Section (collapsed by default) -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <details class="border border-gray-200 rounded">
+                <summary class="bg-blue-50 px-4 py-3 cursor-pointer hover:bg-blue-100 font-medium text-lg">
+                    💡 How It Works
+                </summary>
+                <div class="p-4 prose max-w-none text-sm text-gray-600">
+                    <p class="mb-3"><strong>MCP Server Manager</strong> centralizes control of Model Context Protocol servers across different AI clients.</p>
+
+                    <h3 class="text-base font-semibold text-gray-700 mb-2">🎯 Controls</h3>
+                    <ul class="list-disc list-inside mb-4 space-y-1">
+                        <li><strong>Global toggles:</strong> Enable/disable servers for all clients</li>
+                        <li><strong>Client-specific toggles:</strong> Override global settings per client</li>
+                        <li><strong>Sync button:</strong> Apply all configuration changes to client files</li>
+                    </ul>
+
+                    <h3 class="text-base font-semibold text-gray-700 mb-2">🚀 Transport Types</h3>
+                    <ul class="list-disc list-inside mb-4 space-y-1">
+                        <li><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">STDIO</span> - Local command execution (most common)</li>
+                        <li><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">SSE</span> - Server-Sent Events endpoints</li>
+                        <li><span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">HTTP</span> - HTTP streaming endpoints</li>
+                    </ul>
+
+                    <h3 class="text-base font-semibold text-gray-700 mb-2">📝 Adding New Servers</h3>
+                    <p class="mb-2">Edit your configuration file and add new entries:</p>
+                    <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mb-4"><code>mcp_servers:
+  # STDIO Transport
+  - name: "your-server"
+    command: "npx"
+    args: ["@your/mcp-server"]
+    env:
+      API_KEY: "your-key"
+    enabled_globally: false
+    clients:
+      claude_code: true
+      gemini_cli: false
+
+  # HTTP Transport
+  - name: "http-server"
+    http_url: "https://api.example.com/mcp"
+    headers:
+      Authorization: "Bearer token"
+    enabled_globally: false</code></pre>
+
+                    <h3 class="text-base font-semibold text-gray-700 mb-2">🔄 Workflow</h3>
+                    <ol class="list-decimal list-inside space-y-1">
+                        <li>Toggle servers on/off using checkboxes</li>
+                        <li>Click "Sync All Clients" to apply changes</li>
+                        <li>Restart your AI clients to load new configurations</li>
+                        <li>Check config viewer below to verify changes</li>
+                    </ol>
+                </div>
+            </details>
+        </div>
+
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-700">MCP Servers</h2>
-                <button
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                    hx-post="/api/sync"
-                    hx-trigger="click"
-                    hx-confirm="Sync all client configurations?"
-                    hx-swap="none"
-                    _="on htmx:afterRequest trigger configChanged on body">
-                    Sync All Clients
-                </button>
+                <div class="flex gap-2">
+                    <button
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                        _="on click toggle .hidden on #add-server-form">
+                        Add New Server
+                    </button>
+                    <button
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        hx-post="/api/sync"
+                        hx-trigger="click"
+                        hx-confirm="Sync all client configurations?"
+                        hx-swap="none"
+                        _="on htmx:afterRequest trigger configChanged on body">
+                        Sync All Clients
+                    </button>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -47,6 +109,87 @@
                         {{end}}
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Add New Server Form (hidden by default) -->
+            <div id="add-server-form" class="hidden mt-6 border-t pt-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Add New MCP Server</h3>
+                <div id="success-message" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                    Server added successfully!
+                </div>
+                <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    <span id="error-text"></span>
+                </div>
+
+                <form id="new-server-form" class="space-y-4">
+                    <div>
+                        <label for="server-json" class="block text-sm font-medium text-gray-700 mb-2">
+                            MCP Client Configuration (JSON format)
+                        </label>
+
+                        <!-- Example buttons -->
+                        <div class="mb-2 flex flex-wrap gap-2">
+                            <button type="button" onclick="loadExample('stdio')" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">STDIO Example</button>
+                            <button type="button" onclick="loadExample('http')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">HTTP Example</button>
+                            <button type="button" onclick="loadExample('sse')" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200">SSE Example</button>
+                            <button type="button" onclick="loadExample('context7')" class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200">Context7 Example</button>
+                        </div>
+
+                        <textarea
+                            id="server-json"
+                            name="serverConfig"
+                            rows="15"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                            placeholder="Enter MCP client configuration in JSON format...">{
+  "mcpServers": {
+    "my-server": {
+      "command": "npx",
+      "args": ["@my/mcp-server"],
+      "env": {
+        "API_KEY": "your-key"
+      }
+    }
+  }
+}</textarea>
+                    </div>
+
+                    <div class="text-sm text-gray-600 bg-gray-50 p-4 rounded">
+                        <p class="font-semibold mb-2">📋 MCP Client Configuration Format:</p>
+
+                        <div class="mb-3">
+                            <p class="text-xs font-medium mb-1">📄 Required Format:</p>
+                            <div class="text-xs ml-3 bg-white p-2 rounded border font-mono">
+                                {"mcpServers": {"server-name": {...}}}
+                            </div>
+                            <p class="text-xs mt-1 ml-3"><em>Server name is the key, not a field inside the configuration.</em></p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-medium mb-1">🚀 Transport Types:</p>
+                            <ul class="space-y-1 text-xs ml-3">
+                                <li><strong>STDIO:</strong> Use <code>"command"</code> and <code>"args"</code> for local processes</li>
+                                <li><strong>HTTP:</strong> Use <code>"httpUrl"</code> and optional <code>"headers"</code> for HTTP endpoints</li>
+                                <li><strong>SSE:</strong> Use <code>"url"</code> and optional <code>"headers"</code> for Server-Sent Events</li>
+                            </ul>
+                        </div>
+
+                        <p class="mt-2 text-xs"><em>Exactly one transport type is required per server.</em></p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button
+                            type="submit"
+                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                            Add Server
+                        </button>
+                        <button
+                            type="button"
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                            _="on click add .hidden to #add-server-form">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -85,57 +228,11 @@
             </details>
             {{end}}
         </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">How It Works</h2>
-            <div class="prose max-w-none text-sm text-gray-600">
-                <p class="mb-3"><strong>MCP Server Manager</strong> centralizes control of Model Context Protocol servers across different AI clients.</p>
-
-                <h3 class="text-base font-semibold text-gray-700 mb-2">🎯 Controls</h3>
-                <ul class="list-disc list-inside mb-4 space-y-1">
-                    <li><strong>Global toggles:</strong> Enable/disable servers for all clients</li>
-                    <li><strong>Client-specific toggles:</strong> Override global settings per client</li>
-                    <li><strong>Sync button:</strong> Apply all configuration changes to client files</li>
-                </ul>
-
-                <h3 class="text-base font-semibold text-gray-700 mb-2">📝 Adding New Servers</h3>
-                <p class="mb-2">Edit <code>configs/config.yaml</code> and add new entries:</p>
-                <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mb-4"><code>mcp_servers:
-  - name: "your-server"
-    command: "npx"
-    args: ["@your/mcp-server"]
-    env:
-      API_KEY: "your-key"
-    enabled_globally: false
-    clients:
-      claude_code: true
-      gemini_cli: false</code></pre>
-
-                <h3 class="text-base font-semibold text-gray-700 mb-2">🔄 Workflow</h3>
-                <ol class="list-decimal list-inside space-y-1">
-                    <li>Toggle servers on/off using checkboxes</li>
-                    <li>Click "Sync All Clients" to apply changes</li>
-                    <li>Restart your AI clients to load new configurations</li>
-                    <li>Check config viewer above to verify changes</li>
-                </ol>
-            </div>
-        </div>
     </div>
 
     <script src="/static/prism-core.js"></script>
     <script src="/static/prism-yaml.js"></script>
     <script src="/static/prism-json.js"></script>
-    <script>
-        document.body.addEventListener('htmx:configRequest', function(evt) {
-            evt.detail.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        });
-
-        // Re-highlight code after HTMX updates
-        document.body.addEventListener('htmx:afterSwap', function(evt) {
-            if (typeof Prism !== 'undefined') {
-                Prism.highlightAllUnder(evt.detail.target);
-            }
-        });
-    </script>
+    <script src="/static/app.js"></script>
 </body>
 </html>
