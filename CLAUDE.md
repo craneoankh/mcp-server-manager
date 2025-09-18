@@ -188,3 +188,11 @@ The application operates on a **two-layer configuration model**:
 - Remove MCP servers via Web UI
 - Test on macOS and Windows
 - Allow users to edit files in the Web UI
+- When the app config is changed manually on disk, the web UI does not reflect the changes until the server is restarted.
+- Investigate and document the requirement for enabling user lingering (`loginctl enable-linger <username>`) to ensure the systemd user service starts automatically on system boot.
+- Add 'profiles' functionality (low priority) to save and restore different application configurations. This would allow users to switch between predefined sets of server states. Implementation could involve a new `profiles` key in the main config file or a small local database.
+- Refactor the 'Add New Server' functionality. The current implementation uses a full page reload, which prevents the success notification from being displayed. Change it to use HTMX to asynchronously add the server and update the server list in place, without a page reload. This will also allow the success notification to be displayed correctly.
+- Allow adding new clients and their config paths via the web UI. As part of this, consider refactoring the `clients` section in the main config from a map to an array of objects (e.g., `{name: 'client-name', path: '/path/to/config.json'}`) for easier manipulation.
+- Investigate adding a feature to open configuration files in the user's default text editor directly from the web UI.
+- Update the documentation to explain the benefits of using a dotfile manager (e.g., `chezmoi`) to manage the central `config.yaml`. Mention that this allows for version control, synchronization, and managing secrets like API keys through the dotfile manager's encryption features. [https://www.chezmoi.io/](https://www.chezmoi.io/)
+- Consider removing the 'global' enable/disable flag for servers. It adds complexity, may be buggy, and per-client toggles may be sufficient, which would simplify the UI and configuration logic.
