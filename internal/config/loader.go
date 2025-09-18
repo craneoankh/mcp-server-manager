@@ -101,6 +101,15 @@ mcp_servers:
       claude_code: false
       gemini_cli: false
 
+  - name: "context7"
+    http_url: "https://mcp.context7.com/mcp"
+    headers:
+      CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
+    enabled_globally: false
+    clients:
+      claude_code: false
+      gemini_cli: false
+
 clients:
   - name: "claude_code"
     config_path: "~/.claude/settings.json"

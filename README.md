@@ -25,9 +25,6 @@ sudo dpkg -i mcp-server-manager_Linux_x86_64.deb
 
 # Enable and start the service
 systemctl --user enable --now mcp-server-manager
-
-# Optional: Enable auto-start on boot
-sudo loginctl enable-linger $USER
 ```
 
 ### Option 2: Download Release Binary
@@ -56,6 +53,12 @@ make build
 # Build, install, and start as system service
 make setup
 ```
+
+## Screenshot
+
+![MCP Server Manager Web Interface](./screenshot.png)
+
+*The web interface provides an intuitive way to manage MCP servers across multiple AI clients*
 
 ## Configuration
 
