@@ -7,14 +7,20 @@ Managing Model Context Protocol servers across multiple AI clients (Claude Code,
 
 ## Why Choose MCP Server Manager?
 
-✅ **Single Binary** - No dependencies, just download and run
-✅ **Single Simple Config File** - One YAML file controls everything
-✅ **All Operating Systems** - Works on Linux, macOS, Windows
-✅ **All MCP Clients** - Supports Claude Code, Gemini CLI, and more
-✅ **GUI Interface** - Web interface starts with computer, always available on localhost:6543
-✅ **Add Servers via Web UI** - No need to edit configuration files manually
-✅ **Real-time Validation** - Instant feedback on configuration errors
-✅ **Example Configurations** - Built-in examples for common server types
+- ✅ **Single Binary** - No dependencies, just download and run
+- ✅ **Single Simple Config File** - One YAML file controls everything
+- ✅ **All Operating Systems** - Works on Linux, macOS, Windows
+- ✅ **All MCP Clients** - Supports Claude Code, Gemini CLI, and more
+- ✅ **GUI Interface** - Web interface starts with computer, always available on localhost:6543
+- ✅ **Add Servers via Web UI** - No need to edit configuration files manually
+- ✅ **Real-time Validation** - Instant feedback on configuration errors
+- ✅ **Example Configurations** - Built-in examples for common server types
+
+## Screenshot
+
+![MCP Server Manager Web Interface](./screenshot.png)
+
+*The web interface provides an intuitive way to manage and add MCP servers across multiple AI clients with real-time validation*
 
 ## Installation Options
 
@@ -56,12 +62,6 @@ make build
 # Build, install, and start as system service
 make setup
 ```
-
-## Screenshot
-
-![MCP Server Manager Web Interface](./screenshot.png)
-
-*The web interface provides an intuitive way to manage and add MCP servers across multiple AI clients with real-time validation*
 
 ## Configuration
 

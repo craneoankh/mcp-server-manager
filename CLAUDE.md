@@ -182,3 +182,9 @@ The application operates on a **two-layer configuration model**:
 - Config viewers automatically detect content type (JSON for client configs)
 - HTMX auto-refresh triggers `Prism.highlightAllUnder()` for new content
 - CSS and JS files embedded in binary via assets system
+
+## TODO
+
+- Remove MCP servers via Web UI
+- Test on macOS and Windows
+- Allow users to edit files in the Web UI
