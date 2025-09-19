@@ -8,37 +8,90 @@
     <script src="https://unpkg.com/hyperscript.org@0.9.11"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="/static/prism.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+
+    <!-- Immediate theme application to prevent flash -->
+    <script>
+        (function() {
+            const getStoredTheme = () => {
+                try {
+                    return localStorage.getItem('mcp-theme-preference') || 'system';
+                } catch (error) {
+                    return 'system';
+                }
+            };
+
+            const applyTheme = (theme) => {
+                const root = document.documentElement;
+                if (theme === 'system') {
+                    root.removeAttribute('data-theme');
+                } else {
+                    root.setAttribute('data-theme', theme);
+                }
+            };
+
+            applyTheme(getStoredTheme());
+        })();
+    </script>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body style="background-color: var(--bg-primary); min-height: 100vh; color: var(--text-primary);">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-8">MCP Server Manager</h1>
+        <!-- Header with Theme Toggle -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold" style="color: var(--text-primary);">MCP Server Manager</h1>
+
+            <!-- Theme Toggle -->
+            <div class="theme-toggle">
+                <span class="theme-toggle-label">Theme</span>
+                <div class="theme-selector">
+                    <button class="theme-option" data-theme="light">
+                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                        </svg>
+                        Light
+                    </button>
+                    <button class="theme-option" data-theme="dark">
+                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                        Dark
+                    </button>
+                    <button class="theme-option active" data-theme="system">
+                        <svg class="theme-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"></path>
+                        </svg>
+                        System
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- How It Works Section (collapsed by default) -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <details class="border border-gray-200 rounded">
-                <summary class="bg-blue-50 px-4 py-3 cursor-pointer hover:bg-blue-100 font-medium text-lg">
+        <div class="rounded-lg p-6 mb-6" style="background-color: var(--bg-secondary); box-shadow: var(--shadow);">
+            <details class="border rounded" style="border-color: var(--border-primary);">
+                <summary class="px-4 py-3 cursor-pointer font-medium text-lg" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
                     💡 How It Works
                 </summary>
-                <div class="p-4 prose max-w-none text-sm text-gray-600">
+                <div class="p-4 prose max-w-none text-sm" style="color: var(--text-secondary);">
                     <p class="mb-3"><strong>MCP Server Manager</strong> centralizes control of Model Context Protocol servers across different AI clients.</p>
 
-                    <h3 class="text-base font-semibold text-gray-700 mb-2">🎯 Controls</h3>
+                    <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">🎯 Controls</h3>
                     <ul class="list-disc list-inside mb-4 space-y-1">
                         <li><strong>Global toggles:</strong> Enable/disable servers for all clients</li>
                         <li><strong>Client-specific toggles:</strong> Override global settings per client</li>
                         <li><strong>Sync button:</strong> Apply all configuration changes to client files</li>
                     </ul>
 
-                    <h3 class="text-base font-semibold text-gray-700 mb-2">🚀 Transport Types</h3>
+                    <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">🚀 Transport Types</h3>
                     <ul class="list-disc list-inside mb-4 space-y-1">
                         <li><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">STDIO</span> - Local command execution (most common)</li>
                         <li><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">SSE</span> - Server-Sent Events endpoints</li>
                         <li><span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">HTTP</span> - HTTP streaming endpoints</li>
                     </ul>
 
-                    <h3 class="text-base font-semibold text-gray-700 mb-2">📝 Adding New Servers</h3>
+                    <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">📝 Adding New Servers</h3>
                     <p class="mb-2">Edit your configuration file and add new entries:</p>
-                    <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mb-4"><code>mcp_servers:
+                    <pre class="p-3 rounded text-xs overflow-x-auto mb-4" style="background-color: var(--code-bg); border: 1px solid var(--code-border); color: var(--code-text);"><code>mcp_servers:
   # STDIO Transport
   - name: "your-server"
     command: "npx"
@@ -57,7 +110,7 @@
       Authorization: "Bearer token"
     enabled_globally: false</code></pre>
 
-                    <h3 class="text-base font-semibold text-gray-700 mb-2">🔄 Workflow</h3>
+                    <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">🔄 Workflow</h3>
                     <ol class="list-decimal list-inside space-y-1">
                         <li>Toggle servers on/off using checkboxes</li>
                         <li>Click "Sync All Clients" to apply changes</li>
@@ -68,17 +121,17 @@
             </details>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="rounded-lg p-6 mb-6" style="background-color: var(--bg-secondary); box-shadow: var(--shadow);">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-700">MCP Servers</h2>
+                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">MCP Servers</h2>
                 <div class="flex gap-2">
                     <button
-                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                        class="btn-success"
                         _="on click toggle .hidden on #add-server-form">
                         Add New Server
                     </button>
                     <button
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        class="btn-primary"
                         hx-post="/api/sync"
                         hx-trigger="click"
                         hx-confirm="Sync all client configurations?"
@@ -92,18 +145,18 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full table-auto">
                     <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Server Name</th>
-                            <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Command</th>
-                            <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">Global</th>
+                        <tr style="background-color: var(--bg-tertiary);">
+                            <th class="px-4 py-2 text-left text-sm font-medium" style="color: var(--text-primary);">Server Name</th>
+                            <th class="px-4 py-2 text-left text-sm font-medium" style="color: var(--text-primary);">Command</th>
+                            <th class="px-4 py-2 text-center text-sm font-medium" style="color: var(--text-primary);">Global</th>
                             {{range .clients}}
-                            <th class="px-4 py-2 text-center text-sm font-medium text-gray-700">{{.Name}}</th>
+                            <th class="px-4 py-2 text-center text-sm font-medium" style="color: var(--text-primary);">{{.Name}}</th>
                             {{end}}
                         </tr>
                     </thead>
                     <tbody>
                         {{range .servers}}
-                        <tr id="server-{{.Name}}" class="border-t">
+                        <tr id="server-{{.Name}}" class="border-t" style="border-color: var(--border-primary);">
                             {{template "server_row.html" dict "server" . "clients" $.clients}}
                         </tr>
                         {{end}}
@@ -112,18 +165,18 @@
             </div>
 
             <!-- Add New Server Form (hidden by default) -->
-            <div id="add-server-form" class="hidden mt-6 border-t pt-6">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4">Add New MCP Server</h3>
-                <div id="success-message" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <div id="add-server-form" class="hidden mt-6 border-t pt-6" style="border-color: var(--border-primary);">
+                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Add New MCP Server</h3>
+                <div id="success-message" class="hidden border px-4 py-3 rounded mb-4" style="background-color: #dcfce7; border-color: #16a34a; color: #166534;">
                     Server added successfully!
                 </div>
-                <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div id="error-message" class="hidden border px-4 py-3 rounded mb-4" style="background-color: #fef2f2; border-color: #dc2626; color: #dc2626;">
                     <span id="error-text"></span>
                 </div>
 
                 <form id="new-server-form" class="space-y-4">
                     <div>
-                        <label for="server-json" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="server-json" class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
                             MCP Client Configuration (JSON format)
                         </label>
 
@@ -139,7 +192,8 @@
                             id="server-json"
                             name="serverConfig"
                             rows="15"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 font-mono text-sm"
+                            style="background-color: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-primary); --tw-ring-color: var(--button-primary);"
                             placeholder="Enter MCP client configuration in JSON format...">{
   "mcpServers": {
     "my-server": {
@@ -153,12 +207,12 @@
 }</textarea>
                     </div>
 
-                    <div class="text-sm text-gray-600 bg-gray-50 p-4 rounded">
+                    <div class="text-sm p-4 rounded" style="color: var(--text-secondary); background-color: var(--bg-tertiary);">
                         <p class="font-semibold mb-2">📋 MCP Client Configuration Format:</p>
 
                         <div class="mb-3">
                             <p class="text-xs font-medium mb-1">📄 Required Format:</p>
-                            <div class="text-xs ml-3 bg-white p-2 rounded border font-mono">
+                            <div class="text-xs ml-3 p-2 rounded border font-mono" style="background-color: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-primary);">
                                 {"mcpServers": {"server-name": {...}}}
                             </div>
                             <p class="text-xs mt-1 ml-3"><em>Server name is the key, not a field inside the configuration.</em></p>
@@ -179,12 +233,12 @@
                     <div class="flex gap-2">
                         <button
                             type="submit"
-                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                            class="btn-success">
                             Add Server
                         </button>
                         <button
                             type="button"
-                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                            class="btn-secondary"
                             _="on click add .hidden to #add-server-form">
                             Cancel
                         </button>
@@ -193,12 +247,12 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Configuration Viewer</h2>
+        <div class="rounded-lg p-6 mb-6" style="background-color: var(--bg-secondary); box-shadow: var(--shadow);">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Configuration Viewer</h2>
 
             <!-- App Config -->
-            <details class="mb-4 border border-gray-200 rounded">
-                <summary class="bg-gray-50 px-4 py-3 cursor-pointer hover:bg-gray-100 font-medium">
+            <details class="mb-4 border rounded" style="border-color: var(--border-primary);">
+                <summary class="px-4 py-3 cursor-pointer font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
                     📄 Application configuration
                 </summary>
                 <div class="p-4"
@@ -213,8 +267,8 @@
 
             <!-- Client Configs -->
             {{range .clients}}
-            <details class="mb-4 border border-gray-200 rounded">
-                <summary class="bg-gray-50 px-4 py-3 cursor-pointer hover:bg-gray-100 font-medium">
+            <details class="mb-4 border rounded" style="border-color: var(--border-primary);">
+                <summary class="px-4 py-3 cursor-pointer font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
                     🔧 {{.Name}} configuration ({{.ConfigPath}})
                 </summary>
                 <div class="p-4"

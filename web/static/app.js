@@ -7,12 +7,14 @@ const MCPManager = {
     // Configuration
     config: {
         fadeOutDelay: 3000,
-        fadeOutDuration: 500
+        fadeOutDuration: 500,
+        themeStorageKey: 'mcp-theme-preference'
     },
 
     // State
     state: {
-        isSubmitting: false
+        isSubmitting: false,
+        currentTheme: 'system'
     },
 
     // DOM element getters
@@ -22,7 +24,8 @@ const MCPManager = {
         get errorMessage() { return document.getElementById('error-message'); },
         get errorText() { return document.getElementById('error-text'); },
         get newServerForm() { return document.getElementById('new-server-form'); },
-        get addServerForm() { return document.getElementById('add-server-form'); }
+        get addServerForm() { return document.getElementById('add-server-form'); },
+        get themeOptions() { return document.querySelectorAll('.theme-option'); }
     }
 };
 
@@ -273,6 +276,123 @@ const ServerAPI = {
 };
 
 /**
+ * Theme management
+ */
+const ThemeManager = {
+    /**
+     * Gets the stored theme preference or system default
+     * @returns {string} - Theme preference ('light', 'dark', 'system')
+     */
+    getStoredTheme() {
+        try {
+            return localStorage.getItem(MCPManager.config.themeStorageKey) || 'system';
+        } catch (error) {
+            console.warn('Theme: localStorage not available, using system theme');
+            return 'system';
+        }
+    },
+
+    /**
+     * Stores theme preference
+     * @param {string} theme - Theme to store ('light', 'dark', 'system')
+     */
+    storeTheme(theme) {
+        try {
+            localStorage.setItem(MCPManager.config.themeStorageKey, theme);
+        } catch (error) {
+            console.warn('Theme: localStorage not available, theme not persisted');
+        }
+    },
+
+    /**
+     * Gets system theme preference
+     * @returns {string} - 'light' or 'dark'
+     */
+    getSystemTheme() {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+    },
+
+    /**
+     * Applies theme to document
+     * @param {string} theme - Theme to apply ('light', 'dark', 'system')
+     */
+    applyTheme(theme) {
+        const root = document.documentElement;
+
+        if (theme === 'system') {
+            // Remove data-theme attribute to use CSS media query
+            root.removeAttribute('data-theme');
+        } else {
+            // Set explicit theme
+            root.setAttribute('data-theme', theme);
+        }
+
+        MCPManager.state.currentTheme = theme;
+        this.updateThemeUI();
+    },
+
+    /**
+     * Updates theme toggle UI to reflect current theme
+     */
+    updateThemeUI() {
+        const options = MCPManager.elements.themeOptions;
+        options.forEach(option => {
+            const isActive = option.dataset.theme === MCPManager.state.currentTheme;
+            option.classList.toggle('active', isActive);
+        });
+    },
+
+    /**
+     * Handles theme option click
+     * @param {Event} event - Click event
+     */
+    handleThemeChange(event) {
+        const theme = event.target.closest('.theme-option')?.dataset.theme;
+        if (!theme) return;
+
+        this.applyTheme(theme);
+        this.storeTheme(theme);
+    },
+
+    /**
+     * Initializes theme system
+     */
+    init() {
+        // Load stored theme immediately to prevent flash
+        const storedTheme = this.getStoredTheme();
+        this.applyTheme(storedTheme);
+
+        // Wait for DOM to be ready before setting up UI
+        const setupUI = () => {
+            // Add click handlers to theme options
+            const options = MCPManager.elements.themeOptions;
+            options.forEach(option => {
+                option.addEventListener('click', (event) => this.handleThemeChange(event));
+            });
+
+            // Update UI to reflect current theme
+            this.updateThemeUI();
+        };
+
+        // Setup UI after a short delay to ensure DOM is ready
+        setTimeout(setupUI, 100);
+
+        // Listen for system theme changes
+        if (window.matchMedia) {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            mediaQuery.addEventListener('change', () => {
+                // Only update if currently using system theme
+                if (MCPManager.state.currentTheme === 'system') {
+                    this.applyTheme('system');
+                }
+            });
+        }
+    }
+};
+
+/**
  * Example configurations for different transport types
  */
 const ExampleConfigs = {
@@ -394,6 +514,9 @@ const EventHandlers = {
      * Sets up all event listeners
      */
     init() {
+        // Initialize theme system
+        ThemeManager.init();
+
         // HTMX configuration
         document.body.addEventListener('htmx:configRequest', function(evt) {
             evt.detail.headers['Content-Type'] = 'application/x-www-form-urlencoded';
