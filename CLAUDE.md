@@ -20,6 +20,7 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 - **DO NOT include Claude Code attribution in git commits** - Use semantic commit messages instead
 - Use semantic git commit format: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, etc.
 - Example: `feat: add syntax highlighting to config viewer` instead of generic attribution
+- After completing a task, ask for confirmation then check it in the TODO list below and suggest the commit message
 
 ### Core Commands
 
@@ -195,5 +196,6 @@ The application operates on a **two-layer configuration model**:
 - [ ] Allow adding new clients and their config paths via the web UI. As part of this, consider refactoring the `clients` section in the main config from a map to an array of objects (e.g., `{name: 'client-name', path: '/path/to/config.json'}`) for easier manipulation.
 - [ ] Investigate adding a feature to open configuration files in the user's default text editor directly from the web UI.
 - [ ] Update the documentation to explain the benefits of using a dotfile manager (e.g., `chezmoi`) to manage the central `config.yaml`. Mention that this allows for version control, synchronization, and managing secrets like API keys through the dotfile manager's encryption features. [https://www.chezmoi.io/](https://www.chezmoi.io/)
-- [ ] Move the input field for adding a new server to be below the button and above the list of servers.
+- [x] Consider removing the 'global' enable/disable flag for servers. It adds complexity, may be buggy, and per-client toggles may be sufficient, which would simplify the UI and configuration logic.
+- [x] Move the input field for adding a new server to be below the button and above the list of servers.
 - [x] Implement a dark theme, which defaults to the system theme and allows for manual override.

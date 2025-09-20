@@ -125,7 +125,7 @@
                 <div class="flex gap-2">
                     <button
                         class="btn-success"
-                        _="on click toggle .hidden on #add-server-form">
+                        _="on click toggle .form-slide-show on #add-server-form then toggle .form-slide-enter on #add-server-form">
                         Add New Server
                     </button>
                     <button
@@ -140,7 +140,80 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- Add New Server Form (hidden by default) -->
+            <div id="add-server-form" class="form-slide-container form-slide-enter overflow-hidden">
+                <div class="form-slide-content border-t pt-6" style="border-color: var(--border-primary);">
+                    <div id="success-message" class="hidden border px-4 py-3 rounded mb-4" style="background-color: #dcfce7; border-color: #16a34a; color: #166534;">
+                        Server added successfully!
+                    </div>
+                    <div id="error-message" class="hidden border px-4 py-3 rounded mb-4" style="background-color: #fef2f2; border-color: #dc2626; color: #dc2626;">
+                        <span id="error-text"></span>
+                    </div>
+
+                    <form id="new-server-form" class="space-y-4">
+                        <div>
+                            <label for="server-json" class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+                                MCP Client Configuration (JSON format)
+                            </label>
+
+                            <!-- Example buttons -->
+                            <div class="mb-2 flex flex-wrap gap-2">
+                                <button type="button" onclick="loadExample('stdio')" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">STDIO Example</button>
+                                <button type="button" onclick="loadExample('http')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">HTTP Example</button>
+                                <button type="button" onclick="loadExample('sse')" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200">SSE Example</button>
+                                <button type="button" onclick="loadExample('context7')" class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200">Context7 Example</button>
+                            </div>
+
+                            <textarea
+                                id="server-json"
+                                name="serverConfig"
+                                rows="15"
+                                class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 font-mono text-sm"
+                                style="background-color: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-primary); --tw-ring-color: var(--button-primary);"
+                                placeholder="Enter MCP client configuration in JSON format...">{
+  "mcpServers": {
+    "my-server": {
+      "command": "npx",
+      "args": ["@my/mcp-server"],
+      "env": {
+        "API_KEY": "your-key"
+      }
+    }
+  }
+}</textarea>
+                        </div>
+
+                        <div class="text-sm p-4 rounded" style="color: var(--text-secondary); background-color: var(--bg-tertiary);">
+                            <p class="font-semibold mb-2">📋 MCP Client Configuration Format:</p>
+
+                            <div class="mb-3">
+                                <p class="text-xs font-medium mb-1">📄 Required Format:</p>
+                                <div class="text-xs ml-3 p-2 rounded border font-mono" style="background-color: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-primary);">
+                                    {"mcpServers": {"server-name": {...}}}
+                                </div>
+                                <p class="text-xs mt-1 ml-3"><em>Server name is the key, not a field inside the configuration.</em></p>
+                            </div>
+
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button
+                                type="submit"
+                                class="btn-success">
+                                Add Server
+                            </button>
+                            <button
+                                type="button"
+                                class="btn-secondary"
+                                _="on click add .form-slide-enter to #add-server-form then remove .form-slide-show from #add-server-form">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto mt-8">
                 <table class="min-w-full table-auto">
                     <thead>
                         <tr style="background-color: var(--bg-tertiary);">
@@ -159,88 +232,6 @@
                         {{end}}
                     </tbody>
                 </table>
-            </div>
-
-            <!-- Add New Server Form (hidden by default) -->
-            <div id="add-server-form" class="hidden mt-6 border-t pt-6" style="border-color: var(--border-primary);">
-                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Add New MCP Server</h3>
-                <div id="success-message" class="hidden border px-4 py-3 rounded mb-4" style="background-color: #dcfce7; border-color: #16a34a; color: #166534;">
-                    Server added successfully!
-                </div>
-                <div id="error-message" class="hidden border px-4 py-3 rounded mb-4" style="background-color: #fef2f2; border-color: #dc2626; color: #dc2626;">
-                    <span id="error-text"></span>
-                </div>
-
-                <form id="new-server-form" class="space-y-4">
-                    <div>
-                        <label for="server-json" class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
-                            MCP Client Configuration (JSON format)
-                        </label>
-
-                        <!-- Example buttons -->
-                        <div class="mb-2 flex flex-wrap gap-2">
-                            <button type="button" onclick="loadExample('stdio')" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200">STDIO Example</button>
-                            <button type="button" onclick="loadExample('http')" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">HTTP Example</button>
-                            <button type="button" onclick="loadExample('sse')" class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200">SSE Example</button>
-                            <button type="button" onclick="loadExample('context7')" class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200">Context7 Example</button>
-                        </div>
-
-                        <textarea
-                            id="server-json"
-                            name="serverConfig"
-                            rows="15"
-                            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 font-mono text-sm"
-                            style="background-color: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-primary); --tw-ring-color: var(--button-primary);"
-                            placeholder="Enter MCP client configuration in JSON format...">{
-  "mcpServers": {
-    "my-server": {
-      "command": "npx",
-      "args": ["@my/mcp-server"],
-      "env": {
-        "API_KEY": "your-key"
-      }
-    }
-  }
-}</textarea>
-                    </div>
-
-                    <div class="text-sm p-4 rounded" style="color: var(--text-secondary); background-color: var(--bg-tertiary);">
-                        <p class="font-semibold mb-2">📋 MCP Client Configuration Format:</p>
-
-                        <div class="mb-3">
-                            <p class="text-xs font-medium mb-1">📄 Required Format:</p>
-                            <div class="text-xs ml-3 p-2 rounded border font-mono" style="background-color: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-primary);">
-                                {"mcpServers": {"server-name": {...}}}
-                            </div>
-                            <p class="text-xs mt-1 ml-3"><em>Server name is the key, not a field inside the configuration.</em></p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs font-medium mb-1">🚀 Transport Types:</p>
-                            <ul class="space-y-1 text-xs ml-3">
-                                <li><strong>STDIO:</strong> Use <code>"command"</code> and <code>"args"</code> for local processes</li>
-                                <li><strong>HTTP:</strong> Use <code>"httpUrl"</code> and optional <code>"headers"</code> for HTTP endpoints</li>
-                                <li><strong>SSE:</strong> Use <code>"url"</code> and optional <code>"headers"</code> for Server-Sent Events</li>
-                            </ul>
-                        </div>
-
-                        <p class="mt-2 text-xs"><em>Exactly one transport type is required per server.</em></p>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button
-                            type="submit"
-                            class="btn-success">
-                            Add Server
-                        </button>
-                        <button
-                            type="button"
-                            class="btn-secondary"
-                            _="on click add .hidden to #add-server-form">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
 
