@@ -91,21 +91,16 @@ const FormValidator = {
 
         // Transport validation
         const hasCommand = serverConfig.command && typeof serverConfig.command === 'string';
-        const hasHttpUrl = (serverConfig.http_url && typeof serverConfig.http_url === 'string') ||
-                          (serverConfig.httpUrl && typeof serverConfig.httpUrl === 'string');
+        const hasHttpUrl = serverConfig.httpUrl && typeof serverConfig.httpUrl === 'string';
         const hasUrl = serverConfig.url && typeof serverConfig.url === 'string';
 
-        // Normalize httpUrl to http_url for internal consistency
+        // Keep original config structure
         const normalizedConfig = { ...serverConfig };
-        if (normalizedConfig.httpUrl && !normalizedConfig.http_url) {
-            normalizedConfig.http_url = normalizedConfig.httpUrl;
-            delete normalizedConfig.httpUrl;
-        }
 
         const transportCount = (hasCommand ? 1 : 0) + (hasHttpUrl ? 1 : 0) + (hasUrl ? 1 : 0);
 
         if (transportCount === 0) {
-            return { valid: false, error: 'Server must have exactly one transport type: command, http_url, or url' };
+            return { valid: false, error: 'Server must have exactly one transport type: command, httpUrl, or url' };
         }
 
         if (transportCount > 1) {
