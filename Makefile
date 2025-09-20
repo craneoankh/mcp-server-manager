@@ -87,8 +87,14 @@ release: sync-assets
 	@echo "Current branch: $$(git branch --show-current)"
 	@echo "Last commit: $$(git log -1 --oneline)"
 	@echo ""
-	@echo "Creating and pushing tag: $(VERSION)"
-	@git tag "$(VERSION)" && \
+	@if [ -n "$(MESSAGE)" ]; then \
+		echo "Creating annotated tag: $(VERSION) with custom message"; \
+		git tag -a "$(VERSION)" -m "$(MESSAGE)"; \
+	else \
+		echo "Creating lightweight tag: $(VERSION)"; \
+		git tag "$(VERSION)"; \
+	fi && \
+	echo "Pushing tag: $(VERSION)" && \
 	git push origin "$(VERSION)" && \
 	echo "" && \
 	echo "✅ Release $(VERSION) created!" && \

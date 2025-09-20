@@ -50,6 +50,38 @@ changelog:
       - '^docs:'
       - '^test:'
 
+release:
+  header: |
+    {{- if .TagSubject -}}
+    ## 🎉 {{ .TagSubject }}
+
+    {{- if .TagBody }}
+    {{ .TagBody }}
+    {{- end }}
+
+    ---
+    {{- end }}
+
+    ## 📋 Changes
+  footer: |
+
+    ## 📥 Installation
+
+    ### Linux (Debian/Ubuntu)
+    ```bash
+    wget https://github.com/vlazic/mcp-server-manager/releases/download/{{ .Tag }}/mcp-server-manager_{{ .Version }}_linux_amd64.deb
+    sudo dpkg -i mcp-server-manager_{{ .Version }}_linux_amd64.deb
+    ```
+
+    ### Other Platforms
+    Download the appropriate binary for your platform from the assets below.
+
+    ## 📚 Resources
+    - [Documentation](https://github.com/vlazic/mcp-server-manager#readme)
+    - [Report Issues](https://github.com/vlazic/mcp-server-manager/issues)
+
+    **Full Changelog**: https://github.com/vlazic/mcp-server-manager/compare/{{.PreviousTag}}...{{.Tag}}
+
 nfpms:
   - id: packages
     package_name: mcp-server-manager

@@ -37,9 +37,20 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 
 - `make test-release` - Build and test .deb package locally before release
 - `make release VERSION=v1.1.0` - Create official release with git tag and trigger GitHub Actions
+- `make release VERSION=v1.1.0 MESSAGE="Custom release summary"` - Create release with custom message
 - `make sync-assets` - Sync web assets to embedded location (auto-included in build/release)
 - This triggers GitHub Actions to build cross-platform binaries via GoReleaser
 - Produces releases for Linux, macOS, Windows (amd64 + arm64)
+
+### Release Message Guidelines
+
+When asked to create a release, Claude should:
+1. Analyze commits since the last git tag to understand changes
+2. Create a fun, engaging release summary in the style of YNAB release notes - casual, slightly humorous, user-focused
+3. Summarize features/improvements in a non-technical way that users would understand and appreciate
+4. Include the summary as the MESSAGE parameter: `make release VERSION=vX.X.X MESSAGE="Your fun summary here"`
+
+Example style: "We've been busy little bees! 🐝 This release brings you a shiny new dark mode (because your eyes deserve better at 2 AM), smoother animations that'll make you smile, and we finally ditched that confusing global toggle that nobody understood anyway. Your MCP servers have never looked so good!"
 
 ## Detailed Architecture
 
