@@ -35,7 +35,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 			{
 				Name:            "existing-server",
 				Command:         "echo",
-				EnabledGlobally: false,
 				Clients:         map[string]bool{"claude_code": false},
 			},
 		},
@@ -63,7 +62,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 				Args:            []string{"test"},
 				Env:             map[string]string{"TEST": "value"},
 				Timeout:         30000,
-				EnabledGlobally: false,
 			},
 			expectedStatus: http.StatusOK,
 			expectError:    false,
@@ -75,7 +73,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 				HttpURL:         "https://example.com/mcp",
 				Headers:         map[string]string{"Authorization": "Bearer token"},
 				Timeout:         15000,
-				EnabledGlobally: false,
 			},
 			expectedStatus: http.StatusOK,
 			expectError:    false,
@@ -87,7 +84,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 				URL:             "http://localhost:8080/sse",
 				Headers:         map[string]string{"X-API-Key": "key123"},
 				Timeout:         10000,
-				EnabledGlobally: false,
 			},
 			expectedStatus: http.StatusOK,
 			expectError:    false,
@@ -97,7 +93,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 			requestBody: models.MCPServer{
 				Name:            "existing-server",
 				Command:         "echo",
-				EnabledGlobally: false,
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
@@ -107,7 +102,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 			name: "Invalid JSON - missing required field",
 			requestBody: map[string]interface{}{
 				"command":          "echo",
-				"enabled_globally": false,
 				// missing name
 			},
 			expectedStatus: http.StatusBadRequest,
@@ -118,7 +112,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 			name: "Invalid server - no transport",
 			requestBody: models.MCPServer{
 				Name:            "invalid-server",
-				EnabledGlobally: false,
 				// no transport type specified
 			},
 			expectedStatus: http.StatusBadRequest,
@@ -131,7 +124,6 @@ func TestAPIHandler_AddServer(t *testing.T) {
 				Name:            "multi-transport",
 				Command:         "echo",
 				HttpURL:         "https://example.com",
-				EnabledGlobally: false,
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
@@ -153,8 +145,7 @@ func TestAPIHandler_AddServer(t *testing.T) {
 				{
 					Name:            "existing-server",
 					Command:         "echo",
-					EnabledGlobally: false,
-					Clients:         map[string]bool{"claude_code": false},
+						Clients:         map[string]bool{"claude_code": false},
 				},
 			}
 
@@ -255,7 +246,6 @@ func TestAPIHandler_AddServerClientInitialization(t *testing.T) {
 	server := models.MCPServer{
 		Name:            "test-server",
 		Command:         "echo",
-		EnabledGlobally: false,
 		// Clients map is nil
 	}
 

@@ -108,7 +108,6 @@ mcp_servers:
   - name: "filesystem"
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
-    enabled_globally: true
     clients:
       claude_code: true
       gemini_cli: false

@@ -70,7 +70,7 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 
 **MCPManagerService** (`internal/services/mcp_manager.go`):
 - Central orchestrator coordinating between central config and client configs
-- Handles global/per-client server toggling and sync operations
+- Handles per-client server toggling and sync operations
 - Manages the two-layer configuration model (central YAML → client JSONs)
 
 **ClientConfigService** (`internal/services/client_config.go`):
@@ -91,7 +91,7 @@ The application operates on a **two-layer configuration model**:
 1. **Central Configuration** (`configs/config.yaml`):
    - Defines all available MCP servers with commands, args, environment variables
    - Specifies which clients exist and their config file paths
-   - Controls global enable/disable states and per-client overrides
+   - Controls per-client server enable/disable states
 
 2. **Client Configurations** (e.g., `~/.claude/settings.json`, `~/.gemini/settings.json`):
    - Individual AI client settings that get automatically updated
@@ -195,6 +195,5 @@ The application operates on a **two-layer configuration model**:
 - [ ] Allow adding new clients and their config paths via the web UI. As part of this, consider refactoring the `clients` section in the main config from a map to an array of objects (e.g., `{name: 'client-name', path: '/path/to/config.json'}`) for easier manipulation.
 - [ ] Investigate adding a feature to open configuration files in the user's default text editor directly from the web UI.
 - [ ] Update the documentation to explain the benefits of using a dotfile manager (e.g., `chezmoi`) to manage the central `config.yaml`. Mention that this allows for version control, synchronization, and managing secrets like API keys through the dotfile manager's encryption features. [https://www.chezmoi.io/](https://www.chezmoi.io/)
-- [ ] Consider removing the 'global' enable/disable flag for servers. It adds complexity, may be buggy, and per-client toggles may be sufficient, which would simplify the UI and configuration logic.
 - [ ] Move the input field for adding a new server to be below the button and above the list of servers.
 - [x] Implement a dark theme, which defaults to the system theme and allows for manual override.

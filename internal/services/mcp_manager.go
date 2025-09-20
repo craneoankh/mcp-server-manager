@@ -31,15 +31,6 @@ func (s *MCPManagerService) GetClients() []models.Client {
 	return s.config.Clients
 }
 
-func (s *MCPManagerService) ToggleGlobalMCPServer(serverName string, enabled bool) error {
-	for i, server := range s.config.MCPServers {
-		if server.Name == serverName {
-			s.config.MCPServers[i].EnabledGlobally = enabled
-			return s.saveConfig()
-		}
-	}
-	return fmt.Errorf("MCP server '%s' not found", serverName)
-}
 
 func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string, enabled bool) error {
 	for i, server := range s.config.MCPServers {
@@ -71,7 +62,8 @@ func (s *MCPManagerService) GetServerStatus(serverName string) (*models.MCPServe
 func (s *MCPManagerService) SyncAllClients() error {
 	for _, client := range s.config.Clients {
 		for _, server := range s.config.MCPServers {
-			enabled := server.EnabledGlobally
+			// Servers are enabled by default, unless client-specific override disables them
+			enabled := true
 			if clientEnabled, exists := server.Clients[client.Name]; exists {
 				enabled = clientEnabled
 			}

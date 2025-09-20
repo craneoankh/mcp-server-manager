@@ -4,7 +4,6 @@ mcp_servers:
   - name: "filesystem"
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
-    enabled_globally: true
     clients:
       claude_code: true
       gemini_cli: false
@@ -13,7 +12,6 @@ mcp_servers:
     http_url: "https://mcp.context7.com/mcp"
     headers:
       CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
-    enabled_globally: false
     clients:
       claude_code: false
       gemini_cli: false

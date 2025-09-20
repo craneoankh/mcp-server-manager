@@ -25,7 +25,6 @@ func TestAddServer(t *testing.T) {
 			{
 				Name:            "existing-server",
 				Command:         "echo",
-				EnabledGlobally: false,
 				Clients:         map[string]bool{"claude_code": false},
 			},
 		},
@@ -51,7 +50,6 @@ func TestAddServer(t *testing.T) {
 				Args:            []string{"test"},
 				Env:             map[string]string{"TEST": "value"},
 				Timeout:         30000,
-				EnabledGlobally: false,
 			},
 			wantErr: false,
 		},
@@ -62,7 +60,6 @@ func TestAddServer(t *testing.T) {
 				HttpURL:         "https://example.com/mcp",
 				Headers:         map[string]string{"Authorization": "Bearer token"},
 				Timeout:         15000,
-				EnabledGlobally: false,
 			},
 			wantErr: false,
 		},
@@ -73,7 +70,6 @@ func TestAddServer(t *testing.T) {
 				URL:             "http://localhost:8080/sse",
 				Headers:         map[string]string{"X-API-Key": "key123"},
 				Timeout:         10000,
-				EnabledGlobally: false,
 			},
 			wantErr: false,
 		},
@@ -82,7 +78,6 @@ func TestAddServer(t *testing.T) {
 			server: models.MCPServer{
 				Name:            "existing-server",
 				Command:         "echo",
-				EnabledGlobally: false,
 			},
 			wantErr: true,
 			errMsg:  "server with name 'existing-server' already exists",
@@ -91,7 +86,6 @@ func TestAddServer(t *testing.T) {
 			name: "Invalid server - no transport",
 			server: models.MCPServer{
 				Name:            "invalid-server",
-				EnabledGlobally: false,
 			},
 			wantErr: true,
 			errMsg:  "server validation failed",
@@ -100,7 +94,6 @@ func TestAddServer(t *testing.T) {
 			name: "Invalid server - empty name",
 			server: models.MCPServer{
 				Command:         "echo",
-				EnabledGlobally: false,
 			},
 			wantErr: true,
 			errMsg:  "server validation failed",
@@ -111,7 +104,6 @@ func TestAddServer(t *testing.T) {
 				Name:            "multi-transport",
 				Command:         "echo",
 				HttpURL:         "https://example.com",
-				EnabledGlobally: false,
 			},
 			wantErr: true,
 			errMsg:  "server validation failed",
@@ -121,7 +113,6 @@ func TestAddServer(t *testing.T) {
 			server: models.MCPServer{
 				Name:            "invalid-command-server",
 				Command:         "non_existent_command_12345",
-				EnabledGlobally: false,
 			},
 			wantErr: true,
 			errMsg:  "server validation failed",
@@ -135,8 +126,7 @@ func TestAddServer(t *testing.T) {
 				{
 					Name:            "existing-server",
 					Command:         "echo",
-					EnabledGlobally: false,
-					Clients:         map[string]bool{"claude_code": false},
+						Clients:         map[string]bool{"claude_code": false},
 				},
 			}
 
@@ -212,7 +202,6 @@ func TestAddServerClientInitialization(t *testing.T) {
 	server := models.MCPServer{
 		Name:            "test-server",
 		Command:         "echo",
-		EnabledGlobally: false,
 		// Clients map is nil
 	}
 

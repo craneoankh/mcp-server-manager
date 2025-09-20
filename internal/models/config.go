@@ -21,7 +21,6 @@ type MCPServer struct {
 	ExcludeTools    []string          `yaml:"exclude_tools,omitempty" json:"excludeTools,omitempty"` // Tool blacklist
 
 	// Manager-specific properties
-	EnabledGlobally bool              `yaml:"enabled_globally" json:"enabled_globally"`
 	Clients         map[string]bool   `yaml:"clients" json:"clients"`
 }
 

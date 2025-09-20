@@ -101,7 +101,6 @@ mcp_servers:
       NODE_ENV: "production"
     timeout: 30000  # 30 seconds
     trust: false    # Set to true to bypass tool confirmations
-    enabled_globally: false
     clients:
       claude_code: false
       gemini_cli: false
@@ -113,7 +112,6 @@ mcp_servers:
       CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
       Content-Type: "application/json"
     timeout: 10000  # 10 seconds
-    enabled_globally: false
     clients:
       claude_code: false
       gemini_cli: false
@@ -124,7 +122,6 @@ mcp_servers:
   #   headers:
   #     Authorization: "Bearer YOUR_TOKEN"
   #   timeout: 15000
-  #   enabled_globally: false
   #   clients:
   #     claude_code: false
   #     gemini_cli: false
@@ -141,7 +138,6 @@ mcp_servers:
   #   trust: false
   #   include_tools: ["git_log", "git_diff", "git_show"]  # Only allow these tools
   #   exclude_tools: ["git_push", "git_reset"]           # Block dangerous tools
-  #   enabled_globally: false
   #   clients:
   #     claude_code: false
   #     gemini_cli: false

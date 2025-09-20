@@ -77,8 +77,7 @@
 
                     <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">🎯 Controls</h3>
                     <ul class="list-disc list-inside mb-4 space-y-1">
-                        <li><strong>Global toggles:</strong> Enable/disable servers for all clients</li>
-                        <li><strong>Client-specific toggles:</strong> Override global settings per client</li>
+                        <li><strong>Client-specific toggles:</strong> Enable/disable servers per client</li>
                         <li><strong>Sync button:</strong> Apply all configuration changes to client files</li>
                     </ul>
 
@@ -98,7 +97,6 @@
     args: ["@your/mcp-server"]
     env:
       API_KEY: "your-key"
-    enabled_globally: false
     clients:
       claude_code: true
       gemini_cli: false
@@ -108,7 +106,7 @@
     http_url: "https://api.example.com/mcp"
     headers:
       Authorization: "Bearer token"
-    enabled_globally: false</code></pre>
+</code></pre>
 
                     <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">🔄 Workflow</h3>
                     <ol class="list-decimal list-inside space-y-1">
@@ -148,7 +146,6 @@
                         <tr style="background-color: var(--bg-tertiary);">
                             <th class="px-4 py-2 text-left text-sm font-medium" style="color: var(--text-primary);">Server Name</th>
                             <th class="px-4 py-2 text-left text-sm font-medium" style="color: var(--text-primary);">Command</th>
-                            <th class="px-4 py-2 text-center text-sm font-medium" style="color: var(--text-primary);">Global</th>
                             {{range .clients}}
                             <th class="px-4 py-2 text-center text-sm font-medium" style="color: var(--text-primary);">{{.Name}}</th>
                             {{end}}

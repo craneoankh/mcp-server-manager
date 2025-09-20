@@ -30,23 +30,6 @@ func (h *APIHandler) GetClients(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"clients": clients})
 }
 
-func (h *APIHandler) ToggleGlobalServer(c *gin.Context) {
-	serverName := c.Param("server")
-	enabledStr := c.PostForm("enabled")
-
-	enabled, err := strconv.ParseBool(enabledStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enabled value"})
-		return
-	}
-
-	if err := h.mcpManager.ToggleGlobalMCPServer(serverName, enabled); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"success": true})
-}
 
 func (h *APIHandler) ToggleClientServer(c *gin.Context) {
 	clientName := c.Param("client")

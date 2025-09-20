@@ -113,9 +113,6 @@ const FormValidator = {
         }
 
         // Set default values
-        if (normalizedConfig.enabled_globally === undefined) {
-            normalizedConfig.enabled_globally = false;
-        }
         if (!normalizedConfig.clients) {
             normalizedConfig.clients = {};
         }

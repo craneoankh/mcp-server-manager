@@ -25,7 +25,6 @@ timeout: 30000
 trust: true
 include_tools: ["read_file", "write_file"]
 exclude_tools: ["delete_file"]
-enabled_globally: true
 clients:
   claude_code: true
 `,
@@ -38,7 +37,6 @@ clients:
 				Trust:           true,
 				IncludeTools:    []string{"read_file", "write_file"},
 				ExcludeTools:    []string{"delete_file"},
-				EnabledGlobally: true,
 				Clients:         map[string]bool{"claude_code": true},
 			},
 		},
@@ -51,7 +49,6 @@ headers:
   Authorization: "Bearer token123"
   Content-Type: "application/json"
 timeout: 5000
-enabled_globally: false
 clients:
   claude_code: false
   gemini_cli: true
@@ -64,7 +61,6 @@ clients:
 					"Content-Type":  "application/json",
 				},
 				Timeout:         5000,
-				EnabledGlobally: false,
 				Clients:         map[string]bool{"claude_code": false, "gemini_cli": true},
 			},
 		},
@@ -76,7 +72,6 @@ url: "http://localhost:8080/sse"
 headers:
   X-API-Key: "secret123"
 timeout: 10000
-enabled_globally: true
 clients:
   claude_code: true
 `,
@@ -85,7 +80,6 @@ clients:
 				URL:             "http://localhost:8080/sse",
 				Headers:         map[string]string{"X-API-Key": "secret123"},
 				Timeout:         10000,
-				EnabledGlobally: true,
 				Clients:         map[string]bool{"claude_code": true},
 			},
 		},
@@ -117,9 +111,6 @@ clients:
 			}
 			if server.Trust != tt.expected.Trust {
 				t.Errorf("Trust: got %t, want %t", server.Trust, tt.expected.Trust)
-			}
-			if server.EnabledGlobally != tt.expected.EnabledGlobally {
-				t.Errorf("EnabledGlobally: got %t, want %t", server.EnabledGlobally, tt.expected.EnabledGlobally)
 			}
 
 			// Compare slices and maps
@@ -157,7 +148,6 @@ func TestMCPServerJSONSerialization(t *testing.T) {
 		Trust:           true,
 		IncludeTools:    []string{"tool1", "tool2"},
 		ExcludeTools:    []string{"danger"},
-		EnabledGlobally: true,
 		Clients:         map[string]bool{"claude": true, "gemini": false},
 	}
 
@@ -193,14 +183,12 @@ mcp_servers:
   - name: "filesystem"
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem"]
-    enabled_globally: true
     clients:
       claude_code: true
   - name: "context7"
     http_url: "https://mcp.context7.com/mcp"
     headers:
       CONTEXT7_API_KEY: "key123"
-    enabled_globally: false
     clients:
       gemini_cli: true
 clients:

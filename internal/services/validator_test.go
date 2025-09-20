@@ -23,7 +23,6 @@ func TestValidateMCPServer(t *testing.T) {
 				Args:            []string{"test"},
 				Env:             map[string]string{"TEST": "value"},
 				Timeout:         5000,
-				EnabledGlobally: true,
 				Clients:         map[string]bool{"claude": true},
 			},
 			wantErr: false,
@@ -35,7 +34,6 @@ func TestValidateMCPServer(t *testing.T) {
 				HttpURL:         "https://mcp.context7.com/mcp",
 				Headers:         map[string]string{"Authorization": "Bearer token"},
 				Timeout:         5000,
-				EnabledGlobally: false,
 				Clients:         map[string]bool{"gemini": true},
 			},
 			wantErr: false,
@@ -47,7 +45,6 @@ func TestValidateMCPServer(t *testing.T) {
 				URL:             "http://localhost:8080/sse",
 				Headers:         map[string]string{"X-API-Key": "key123"},
 				Timeout:         10000,
-				EnabledGlobally: true,
 				Clients:         map[string]bool{"claude": true},
 			},
 			wantErr: false,
@@ -205,8 +202,7 @@ func TestValidateConfig(t *testing.T) {
 					{
 						Name:            "filesystem",
 						Command:         "echo",
-						EnabledGlobally: true,
-						Clients:         map[string]bool{"claude": true},
+								Clients:         map[string]bool{"claude": true},
 					},
 				},
 				Clients: []models.Client{

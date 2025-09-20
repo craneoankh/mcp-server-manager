@@ -30,29 +30,6 @@ func (h *WebHandler) Index(c *gin.Context) {
 	})
 }
 
-func (h *WebHandler) ToggleGlobalServerHTMX(c *gin.Context) {
-	serverName := c.Param("server")
-	enabledStr := c.PostForm("enabled")
-
-	enabled, err := strconv.ParseBool(enabledStr)
-	if err != nil {
-		errorHTML := renderGlobalToggleWithError(serverName, "Invalid enabled value: "+enabledStr)
-		c.Data(http.StatusBadRequest, "text/html", []byte(errorHTML))
-		return
-	}
-
-	if err := h.mcpManager.ToggleGlobalMCPServer(serverName, enabled); err != nil {
-		errorHTML := renderGlobalToggleWithError(serverName, "Error: "+err.Error())
-		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
-		return
-	}
-
-	server, _ := h.mcpManager.GetServerStatus(serverName)
-	c.HTML(http.StatusOK, "server_row.html", gin.H{
-		"server":  server,
-		"clients": h.mcpManager.GetClients(),
-	})
-}
 
 func (h *WebHandler) ToggleClientServerHTMX(c *gin.Context) {
 	clientName := c.Param("client")
@@ -116,6 +93,3 @@ func renderClientToggleWithError(clientName, serverName, errorMessage string) st
 	return errorContainer + toggleHTML
 }
 
-func renderGlobalToggleWithError(serverName, errorMessage string) string {
-	return renderErrorBox(errorMessage)
-}
