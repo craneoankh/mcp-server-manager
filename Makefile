@@ -68,9 +68,9 @@ test-release: sync-assets
 	@echo "Building local test release..."
 	@goreleaser release --snapshot --clean --skip=publish
 	@echo "Installing .deb package..."
-	@sudo dpkg -i dist/$(SERVICE_NAME)_*_linux_amd64.deb
+	@sudo dpkg -i dist/$(BINARY_NAME)_*_linux_amd64.deb
 	@echo "Restarting service..."
-	@systemctl --user restart --now $(SERVICE_NAME)
+	@systemctl --user restart --now $(BINARY_NAME)
 	@echo ""
 	@echo "✅ Test release complete! Go to: http://localhost:6543"
 

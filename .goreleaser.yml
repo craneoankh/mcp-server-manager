@@ -51,6 +51,10 @@ changelog:
       - '^test:'
 
 release:
+  github:
+    owner: vlazic
+    name: mcp-server-manager
+  name_template: "{{.ProjectName}} v{{.Version}}"
   header: |
     {{- if .TagSubject -}}
     ## 🎉 {{ .TagSubject }}
@@ -106,9 +110,3 @@ nfpms:
     bindir: /usr/local/bin
     scripts:
       postinstall: "scripts/postinstall.sh"
-
-release:
-  github:
-    owner: vlazic
-    name: mcp-server-manager
-  name_template: "{{.ProjectName}} v{{.Version}}"
