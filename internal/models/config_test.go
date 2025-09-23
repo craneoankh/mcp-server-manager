@@ -193,7 +193,7 @@ mcp_servers:
       gemini_cli: true
 clients:
   - name: "claude_code"
-    config_path: "~/.claude/settings.json"
+    config_path: "~/.claude.json"
   - name: "gemini_cli"
     config_path: "~/.gemini/settings.json"
 `

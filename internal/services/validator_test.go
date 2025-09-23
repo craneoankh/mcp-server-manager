@@ -208,7 +208,7 @@ func TestValidateConfig(t *testing.T) {
 				Clients: []models.Client{
 					{
 						Name:       "claude",
-						ConfigPath: "~/.claude/settings.json",
+						ConfigPath: "~/.claude.json",
 					},
 				},
 			},
@@ -225,7 +225,7 @@ func TestValidateConfig(t *testing.T) {
 					},
 				},
 				Clients: []models.Client{
-					{Name: "claude", ConfigPath: "~/.claude/settings.json"},
+					{Name: "claude", ConfigPath: "~/.claude.json"},
 				},
 			},
 			wantErr: true,
@@ -242,7 +242,7 @@ func TestValidateConfig(t *testing.T) {
 					},
 				},
 				Clients: []models.Client{
-					{Name: "claude", ConfigPath: "~/.claude/settings.json"},
+					{Name: "claude", ConfigPath: "~/.claude.json"},
 				},
 			},
 			wantErr: true,
@@ -254,7 +254,7 @@ func TestValidateConfig(t *testing.T) {
 				ServerPort: 6543,
 				MCPServers: []models.MCPServer{},
 				Clients: []models.Client{
-					{Name: "claude", ConfigPath: "~/.claude/settings.json"},
+					{Name: "claude", ConfigPath: "~/.claude.json"},
 				},
 			},
 			wantErr: true,
@@ -311,14 +311,14 @@ func TestValidateClient(t *testing.T) {
 			name: "Valid client",
 			client: models.Client{
 				Name:       "claude",
-				ConfigPath: "~/.claude/settings.json",
+				ConfigPath: "~/.claude.json",
 			},
 			wantErr: false,
 		},
 		{
 			name: "Empty name",
 			client: models.Client{
-				ConfigPath: "~/.claude/settings.json",
+				ConfigPath: "~/.claude.json",
 			},
 			wantErr: true,
 			errMsg:  "client name cannot be empty",

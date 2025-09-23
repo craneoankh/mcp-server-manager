@@ -29,7 +29,7 @@ func TestAddServer(t *testing.T) {
 			},
 		},
 		Clients: []models.Client{
-			{Name: "claude_code", ConfigPath: "~/.claude/settings.json"},
+			{Name: "claude_code", ConfigPath: "~/.claude.json"},
 			{Name: "gemini_cli", ConfigPath: "~/.gemini/settings.json"},
 		},
 	}
@@ -190,7 +190,7 @@ func TestAddServerClientInitialization(t *testing.T) {
 		ServerPort: 6543,
 		MCPServers: []models.MCPServer{},
 		Clients: []models.Client{
-			{Name: "claude_code", ConfigPath: "~/.claude/settings.json"},
+			{Name: "claude_code", ConfigPath: "~/.claude.json"},
 			{Name: "gemini_cli", ConfigPath: "~/.gemini/settings.json"},
 			{Name: "custom_client", ConfigPath: "~/.custom/settings.json"},
 		},

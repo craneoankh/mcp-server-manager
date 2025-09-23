@@ -105,7 +105,7 @@ The application operates on a **two-layer configuration model**:
    - Specifies which clients exist and their config file paths
    - Controls per-client server enable/disable states
 
-2. **Client Configurations** (e.g., `~/.claude/settings.json`, `~/.gemini/settings.json`):
+2. **Client Configurations** (e.g., `~/.claude.json`, `~/.gemini/settings.json`):
    - Individual AI client settings that get automatically updated
    - Preserves client-specific settings (themes, auth) while updating MCP sections
    - Supports different formats: Claude (command-based) vs Gemini (command + HTTP)
