@@ -42,6 +42,8 @@ type ClientConfig struct {
 	SelectedAuthType    *string                 `json:"selectedAuthType,omitempty"`
 	Theme               *string                 `json:"theme,omitempty"`
 	PreferredEditor     *string                 `json:"preferredEditor,omitempty"`
+	// Preserve any other unknown fields
+	Other map[string]interface{} `json:"-"`
 }
 
 type MCPServerConfig struct {

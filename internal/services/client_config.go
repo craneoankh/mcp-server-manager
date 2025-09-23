@@ -23,7 +23,7 @@ func NewClientConfigService(cfg *models.Config) *ClientConfigService {
 	}
 }
 
-func (s *ClientConfigService) ReadClientConfig(clientName string) (*models.ClientConfig, error) {
+func (s *ClientConfigService) ReadClientConfig(clientName string) (map[string]interface{}, error) {
 	client := s.findClient(clientName)
 	if client == nil {
 		return nil, fmt.Errorf("client '%s' not found", clientName)
@@ -34,34 +34,30 @@ func (s *ClientConfigService) ReadClientConfig(clientName string) (*models.Clien
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Create empty config if file doesn't exist
-			return &models.ClientConfig{
-				MCPServers: make(map[string]interface{}),
+			return map[string]interface{}{
+				"mcpServers": make(map[string]interface{}),
 			}, nil
 		}
 		return nil, fmt.Errorf("failed to read client config '%s': %w", configPath, err)
 	}
 
-	var clientConfig models.ClientConfig
-	if err := json.Unmarshal(data, &clientConfig); err != nil {
+	var rawConfig map[string]interface{}
+	if err := json.Unmarshal(data, &rawConfig); err != nil {
 		return nil, fmt.Errorf("failed to parse client config '%s': %w", configPath, err)
 	}
 
-	// Initialize MCPServers map if nil
-	if clientConfig.MCPServers == nil {
-		clientConfig.MCPServers = make(map[string]interface{})
+	// Initialize mcpServers if it doesn't exist
+	if rawConfig["mcpServers"] == nil {
+		rawConfig["mcpServers"] = make(map[string]interface{})
 	}
 
-	return &clientConfig, nil
+	return rawConfig, nil
 }
 
-func (s *ClientConfigService) WriteClientConfig(clientName string, clientConfig *models.ClientConfig) error {
+func (s *ClientConfigService) WriteClientConfig(clientName string, rawConfig map[string]interface{}) error {
 	client := s.findClient(clientName)
 	if client == nil {
 		return fmt.Errorf("client '%s' not found", clientName)
-	}
-
-	if err := s.validator.ValidateClientConfig(clientConfig); err != nil {
-		return fmt.Errorf("client config validation failed: %w", err)
 	}
 
 	configPath := config.ExpandPath(client.ConfigPath)
@@ -74,26 +70,29 @@ func (s *ClientConfigService) WriteClientConfig(clientName string, clientConfig 
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	data, err := json.MarshalIndent(clientConfig, "", "  ")
+	data, err := json.MarshalIndent(rawConfig, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal client config: %w", err)
 	}
 
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write client config: %w", err)
+		return fmt.Errorf("failed to write client config '%s': %w", configPath, err)
 	}
 
 	return nil
 }
 
 func (s *ClientConfigService) UpdateMCPServerStatus(clientName, serverName string, enabled bool) error {
-	clientConfig, err := s.ReadClientConfig(clientName)
+	rawConfig, err := s.ReadClientConfig(clientName)
 	if err != nil {
 		return err
 	}
 
-	if clientConfig.MCPServers == nil {
-		clientConfig.MCPServers = make(map[string]interface{})
+	// Get or create mcpServers section
+	mcpServers, ok := rawConfig["mcpServers"].(map[string]interface{})
+	if !ok {
+		mcpServers = make(map[string]interface{})
+		rawConfig["mcpServers"] = mcpServers
 	}
 
 	server := s.findMCPServer(serverName)
@@ -129,21 +128,26 @@ func (s *ClientConfigService) UpdateMCPServerStatus(clientName, serverName strin
 			serverConfig["headers"] = server.Headers
 		}
 
-		clientConfig.MCPServers[serverName] = serverConfig
+		mcpServers[serverName] = serverConfig
 	} else {
-		delete(clientConfig.MCPServers, serverName)
+		delete(mcpServers, serverName)
 	}
 
-	return s.WriteClientConfig(clientName, clientConfig)
+	return s.WriteClientConfig(clientName, rawConfig)
 }
 
 func (s *ClientConfigService) GetMCPServerStatus(clientName, serverName string) (bool, error) {
-	clientConfig, err := s.ReadClientConfig(clientName)
+	rawConfig, err := s.ReadClientConfig(clientName)
 	if err != nil {
 		return false, err
 	}
 
-	_, exists := clientConfig.MCPServers[serverName]
+	mcpServers, ok := rawConfig["mcpServers"].(map[string]interface{})
+	if !ok {
+		return false, nil
+	}
+
+	_, exists := mcpServers[serverName]
 	return exists, nil
 }
 
