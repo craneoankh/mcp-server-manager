@@ -89,7 +89,7 @@ release: sync-assets
 	@echo ""
 	@if [ -n "$(MESSAGE)" ]; then \
 		echo "Creating annotated tag: $(VERSION) with custom message"; \
-		git tag -a "$(VERSION)" -m "$(MESSAGE)"; \
+		printf "%s" "$(MESSAGE)" | git tag -a "$(VERSION)" -F -; \
 	else \
 		echo "Creating lightweight tag: $(VERSION)"; \
 		git tag "$(VERSION)"; \

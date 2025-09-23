@@ -48,9 +48,24 @@ When asked to create a release, Claude should:
 1. Analyze commits since the last git tag to understand changes
 2. Create a fun, engaging release summary in the style of YNAB release notes - casual, slightly humorous, user-focused
 3. Summarize features/improvements in a non-technical way that users would understand and appreciate
-4. Include the summary as the MESSAGE parameter: `make release VERSION=vX.X.X MESSAGE="Your fun summary here"`
+4. Format the message with a **subject line**, **blank line**, and **body** for proper GoReleaser parsing
+5. Include the summary as the MESSAGE parameter: `make release VERSION=vX.X.X MESSAGE="Subject Line
 
-Example style: "We've been busy little bees! 🐝 This release brings you a shiny new dark mode (because your eyes deserve better at 2 AM), smoother animations that'll make you smile, and we finally ditched that confusing global toggle that nobody understood anyway. Your MCP servers have never looked so good!"
+Body content here with details..."`
+
+**Message Format Requirements:**
+- **First line**: Short, catchy subject (will appear as release title)
+- **Second line**: Must be blank
+- **Remaining lines**: Detailed description with features, improvements, etc.
+
+**Example:**
+```bash
+make release VERSION=v1.4.0 MESSAGE="Fresh updates for your MCP setup! 🎉
+
+We've been busy little bees! 🐝 This release brings you a shiny new dark mode (because your eyes deserve better at 2 AM), smoother animations that'll make you smile, and we finally ditched that confusing global toggle that nobody understood anyway. Your MCP servers have never looked so good!"
+```
+
+**Single-line fallback**: If a single-line message is provided, the Makefile will handle it properly, but multi-line format is preferred for better release notes.
 
 ## Detailed Architecture
 
