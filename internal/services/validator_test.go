@@ -283,7 +283,7 @@ func TestValidateMCPServerConfig(t *testing.T) {
 				t.Errorf("ValidateMCPServerConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr && tt.errContains != "" && err != nil {
-				if !contains(err.Error(), tt.errContains) {
+				if !containsSubstring(err.Error(), tt.errContains) {
 					t.Errorf("Expected error containing '%s', got '%s'", tt.errContains, err.Error())
 				}
 			}
@@ -340,7 +340,7 @@ func TestValidateClient(t *testing.T) {
 				t.Errorf("ValidateClient() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr && tt.errContains != "" && err != nil {
-				if !contains(err.Error(), tt.errContains) {
+				if !containsSubstring(err.Error(), tt.errContains) {
 					t.Errorf("Expected error containing '%s', got '%s'", tt.errContains, err.Error())
 				}
 			}
@@ -378,7 +378,7 @@ func TestValidateConfig(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for port 0")
 		}
-		if !contains(err.Error(), "invalid server port") {
+		if !containsSubstring(err.Error(), "invalid server port") {
 			t.Errorf("Expected 'invalid server port' error, got: %v", err)
 		}
 	})
@@ -407,7 +407,7 @@ func TestValidateConfig(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for no servers")
 		}
-		if !contains(err.Error(), "no MCP servers configured") {
+		if !containsSubstring(err.Error(), "no MCP servers configured") {
 			t.Errorf("Expected 'no MCP servers' error, got: %v", err)
 		}
 	})
@@ -423,7 +423,7 @@ func TestValidateConfig(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for no clients")
 		}
-		if !contains(err.Error(), "no clients configured") {
+		if !containsSubstring(err.Error(), "no clients configured") {
 			t.Errorf("Expected 'no clients' error, got: %v", err)
 		}
 	})
@@ -441,7 +441,7 @@ func TestValidateConfig(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for non-existent server reference")
 		}
-		if !contains(err.Error(), "references non-existent server") {
+		if !containsSubstring(err.Error(), "references non-existent server") {
 			t.Errorf("Expected 'references non-existent server' error, got: %v", err)
 		}
 	})
@@ -581,7 +581,7 @@ func TestIsCommandAvailable(t *testing.T) {
 }
 
 // Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
+func containsSubstring(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > 0 && len(substr) > 0 && stringContains(s, substr)))
 }

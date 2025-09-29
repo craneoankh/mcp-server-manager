@@ -35,21 +35,14 @@ func (s *MCPManagerService) GetClients() map[string]*models.Client {
 
 // ToggleClientMCPServer enables or disables a server for a specific client
 func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string, enabled bool) error {
-	// Check if client exists
+	// Validate client exists
 	client, exists := s.config.Clients[clientName]
 	if !exists {
 		return fmt.Errorf("client '%s' not found", clientName)
 	}
 
-	// Check if server exists
-	serverExists := false
-	for _, srv := range s.config.MCPServers {
-		if srv.Name == serverName {
-			serverExists = true
-			break
-		}
-	}
-	if !serverExists {
+	// Validate server exists
+	if !s.serverExists(serverName) {
 		return fmt.Errorf("MCP server '%s' not found", serverName)
 	}
 
@@ -58,28 +51,11 @@ func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string,
 		client.Enabled = []string{}
 	}
 
-	// Update enabled list
+	// Update enabled list using utility functions
 	if enabled {
-		// Add server to enabled list if not already present
-		found := false
-		for _, name := range client.Enabled {
-			if name == serverName {
-				found = true
-				break
-			}
-		}
-		if !found {
-			client.Enabled = append(client.Enabled, serverName)
-		}
+		client.Enabled = addUnique(client.Enabled, serverName)
 	} else {
-		// Remove server from enabled list
-		newEnabled := []string{}
-		for _, name := range client.Enabled {
-			if name != serverName {
-				newEnabled = append(newEnabled, name)
-			}
-		}
-		client.Enabled = newEnabled
+		client.Enabled = removeItem(client.Enabled, serverName)
 	}
 
 	// Save config
@@ -89,6 +65,16 @@ func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string,
 
 	// Update client config file
 	return s.clientConfigService.UpdateMCPServerStatus(clientName, serverName, enabled)
+}
+
+// serverExists checks if a server exists in the configuration
+func (s *MCPManagerService) serverExists(serverName string) bool {
+	for _, srv := range s.config.MCPServers {
+		if srv.Name == serverName {
+			return true
+		}
+	}
+	return false
 }
 
 // GetServerStatus returns server configuration by name

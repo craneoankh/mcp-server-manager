@@ -5,6 +5,11 @@ import (
 	"testing"
 )
 
+const (
+	testContext7URL      = "https://mcp.context7.com/mcp"
+	testContext7GeminiID = "context7-gemini"
+)
+
 func TestConfigStructure(t *testing.T) {
 	// Note: This test uses direct YAML unmarshaling, not the loader
 	// The loader uses custom logic to preserve order. This tests basic struct compatibility.
@@ -25,7 +30,7 @@ func TestConfigStructure(t *testing.T) {
 				Name: "context7",
 				Config: map[string]interface{}{
 					"type": "http",
-					"url":  "https://mcp.context7.com/mcp",
+					"url":  testContext7URL,
 					"headers": map[string]interface{}{
 						"CONTEXT7_API_KEY": "key123",
 						"Accept":           "application/json",
@@ -33,9 +38,9 @@ func TestConfigStructure(t *testing.T) {
 				},
 			},
 			{
-				Name: "context7-gemini",
+				Name: testContext7GeminiID,
 				Config: map[string]interface{}{
-					"httpUrl": "https://mcp.context7.com/mcp",
+					"httpUrl": testContext7URL,
 					"headers": map[string]interface{}{
 						"CONTEXT7_API_KEY": "key123",
 					},
@@ -49,7 +54,7 @@ func TestConfigStructure(t *testing.T) {
 			},
 			"gemini_cli": {
 				ConfigPath: "~/.gemini/settings.json",
-				Enabled:    []string{"context7-gemini"},
+				Enabled:    []string{testContext7GeminiID},
 			},
 		},
 	}

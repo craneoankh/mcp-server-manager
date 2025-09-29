@@ -10,6 +10,8 @@ import (
 	"github.com/vlazic/mcp-server-manager/internal/services"
 )
 
+const contentTypeHTML = "text/html"
+
 type WebHandler struct {
 	mcpManager *services.MCPManagerService
 }
@@ -69,20 +71,20 @@ func (h *WebHandler) ToggleClientServerHTMX(c *gin.Context) {
 	enabled, err := strconv.ParseBool(enabledStr)
 	if err != nil {
 		errorHTML := renderClientToggleWithError(clientName, serverName, "Invalid enabled value: "+enabledStr)
-		c.Data(http.StatusBadRequest, "text/html", []byte(errorHTML))
+		c.Data(http.StatusBadRequest, contentTypeHTML, []byte(errorHTML))
 		return
 	}
 
 	if err := h.mcpManager.ToggleClientMCPServer(clientName, serverName, enabled); err != nil {
 		errorHTML := renderClientToggleWithError(clientName, serverName, "Error: "+err.Error())
-		c.Data(http.StatusBadRequest, "text/html", []byte(errorHTML))
+		c.Data(http.StatusBadRequest, contentTypeHTML, []byte(errorHTML))
 		return
 	}
 
 	serverConfig, err := h.mcpManager.GetServerStatus(serverName)
 	if err != nil {
 		errorHTML := renderClientToggleWithError(clientName, serverName, "Error getting server status: "+err.Error())
-		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
+		c.Data(http.StatusInternalServerError, contentTypeHTML, []byte(errorHTML))
 		return
 	}
 
@@ -91,7 +93,7 @@ func (h *WebHandler) ToggleClientServerHTMX(c *gin.Context) {
 	client, exists := clients[clientName]
 	if !exists {
 		errorHTML := renderClientToggleWithError(clientName, serverName, "Client not found")
-		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
+		c.Data(http.StatusInternalServerError, contentTypeHTML, []byte(errorHTML))
 		return
 	}
 

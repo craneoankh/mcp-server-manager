@@ -15,6 +15,16 @@ func NewValidatorService() *ValidatorService {
 	return &ValidatorService{}
 }
 
+// TransportType represents the type of MCP server transport
+type TransportType int
+
+const (
+	TransportNone TransportType = iota
+	TransportCommand
+	TransportURL
+	TransportHTTP
+)
+
 func (v *ValidatorService) ValidateConfig(config *models.Config) error {
 	if config.ServerPort < 1 || config.ServerPort > 65535 {
 		return fmt.Errorf("invalid server port: %d", config.ServerPort)
@@ -58,85 +68,120 @@ func (v *ValidatorService) ValidateConfig(config *models.Config) error {
 	return nil
 }
 
+// detectTransportType identifies the transport type from server config
+func detectTransportType(serverConfig map[string]interface{}) (TransportType, string, error) {
+	var transportType TransportType
+	var transportValue string
+	count := 0
+
+	if command, exists := serverConfig["command"]; exists && command != nil {
+		if cmdStr, ok := command.(string); ok && strings.TrimSpace(cmdStr) != "" {
+			transportType = TransportCommand
+			transportValue = cmdStr
+			count++
+		}
+	}
+
+	if urlVal, exists := serverConfig["url"]; exists && urlVal != nil {
+		if urlStr, ok := urlVal.(string); ok && strings.TrimSpace(urlStr) != "" {
+			transportType = TransportURL
+			transportValue = urlStr
+			count++
+		}
+	}
+
+	if httpUrl, exists := serverConfig["httpUrl"]; exists && httpUrl != nil {
+		if httpUrlStr, ok := httpUrl.(string); ok && strings.TrimSpace(httpUrlStr) != "" {
+			transportType = TransportHTTP
+			transportValue = httpUrlStr
+			count++
+		}
+	}
+
+	if count == 0 {
+		return TransportNone, "", fmt.Errorf("server must have exactly one transport type: command, url, or httpUrl")
+	}
+	if count > 1 {
+		return TransportNone, "", fmt.Errorf("server must have exactly one transport type, found %d", count)
+	}
+
+	return transportType, transportValue, nil
+}
+
+// validateTransportValue validates the specific transport value based on type
+func (v *ValidatorService) validateTransportValue(transportType TransportType, value string) error {
+	switch transportType {
+	case TransportCommand:
+		if !v.IsCommandAvailable(value) {
+			return fmt.Errorf("command '%s' not found in PATH", value)
+		}
+	case TransportURL, TransportHTTP:
+		if err := v.validateURL(value); err != nil {
+			return fmt.Errorf("invalid URL '%s': %w", value, err)
+		}
+	}
+	return nil
+}
+
+// validateTimeout validates timeout configuration
+func validateTimeout(serverConfig map[string]interface{}) error {
+	if timeout, exists := serverConfig["timeout"]; exists && timeout != nil {
+		if timeoutNum, ok := timeout.(int); ok && timeoutNum < 0 {
+			return fmt.Errorf("timeout cannot be negative")
+		}
+	}
+	return nil
+}
+
+// validateEnvironmentVariables validates environment variable configuration
+func validateEnvironmentVariables(serverConfig map[string]interface{}) error {
+	env, exists := serverConfig["env"]
+	if !exists || env == nil {
+		return nil
+	}
+
+	envMap, ok := env.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	for key, value := range envMap {
+		if strings.TrimSpace(key) == "" {
+			return fmt.Errorf("environment variable key cannot be empty")
+		}
+		if strings.Contains(key, "=") {
+			return fmt.Errorf("environment variable key cannot contain '='")
+		}
+		if valStr, ok := value.(string); !ok || strings.TrimSpace(valStr) == "" {
+			return fmt.Errorf("environment variable value for '%s' cannot be empty", key)
+		}
+	}
+	return nil
+}
+
 // ValidateMCPServerConfig validates a server configuration map
 func (v *ValidatorService) ValidateMCPServerConfig(serverName string, serverConfig map[string]interface{}) error {
 	if strings.TrimSpace(serverName) == "" {
 		return fmt.Errorf("server name cannot be empty")
 	}
 
-	// Validate transport type (exactly one required)
-	hasCommand := false
-	hasURL := false
-	hasHttpURL := false
-
-	if command, exists := serverConfig["command"]; exists && command != nil {
-		if cmdStr, ok := command.(string); ok && strings.TrimSpace(cmdStr) != "" {
-			hasCommand = true
-			// Validate command is in PATH
-			if !v.IsCommandAvailable(cmdStr) {
-				return fmt.Errorf("command '%s' not found in PATH", cmdStr)
-			}
-		}
+	// Detect and validate transport type
+	transportType, transportValue, err := detectTransportType(serverConfig)
+	if err != nil {
+		return err
 	}
 
-	if url, exists := serverConfig["url"]; exists && url != nil {
-		if urlStr, ok := url.(string); ok && strings.TrimSpace(urlStr) != "" {
-			hasURL = true
-			if err := v.validateURL(urlStr); err != nil {
-				return fmt.Errorf("invalid URL '%s': %w", urlStr, err)
-			}
-		}
+	if err := v.validateTransportValue(transportType, transportValue); err != nil {
+		return err
 	}
 
-	if httpUrl, exists := serverConfig["httpUrl"]; exists && httpUrl != nil {
-		if httpUrlStr, ok := httpUrl.(string); ok && strings.TrimSpace(httpUrlStr) != "" {
-			hasHttpURL = true
-			if err := v.validateURL(httpUrlStr); err != nil {
-				return fmt.Errorf("invalid httpUrl '%s': %w", httpUrlStr, err)
-			}
-		}
+	// Validate optional fields
+	if err := validateTimeout(serverConfig); err != nil {
+		return err
 	}
 
-	transportCount := 0
-	if hasCommand {
-		transportCount++
-	}
-	if hasURL {
-		transportCount++
-	}
-	if hasHttpURL {
-		transportCount++
-	}
-
-	if transportCount == 0 {
-		return fmt.Errorf("server must have exactly one transport type: command, url, or httpUrl")
-	}
-	if transportCount > 1 {
-		return fmt.Errorf("server must have exactly one transport type, found %d", transportCount)
-	}
-
-	// Validate timeout if present
-	if timeout, exists := serverConfig["timeout"]; exists && timeout != nil {
-		if timeoutNum, ok := timeout.(int); ok && timeoutNum < 0 {
-			return fmt.Errorf("timeout cannot be negative")
-		}
-	}
-
-	// Validate environment variables if present
-	if env, exists := serverConfig["env"]; exists && env != nil {
-		if envMap, ok := env.(map[string]interface{}); ok {
-			for key, value := range envMap {
-				if strings.TrimSpace(key) == "" {
-					return fmt.Errorf("environment variable key cannot be empty")
-				}
-				if strings.Contains(key, "=") {
-					return fmt.Errorf("environment variable key cannot contain '='")
-				}
-				if valStr, ok := value.(string); !ok || strings.TrimSpace(valStr) == "" {
-					return fmt.Errorf("environment variable value for '%s' cannot be empty", key)
-				}
-			}
-		}
+	if err := validateEnvironmentVariables(serverConfig); err != nil {
+		return err
 	}
 
 	return nil
@@ -192,51 +237,16 @@ func (v *ValidatorService) ValidateClientConfig(clientConfig *models.ClientConfi
 			return fmt.Errorf("server name cannot be empty")
 		}
 
-		// Basic validation - just check if it's a map
-		if serverMap, ok := serverInterface.(map[string]interface{}); ok {
-			// Check if command exists (for STDIO servers)
-			if command, exists := serverMap["command"]; exists {
-				if commandStr, ok := command.(string); !ok || commandStr == "" {
-					return fmt.Errorf("server '%s' command must be a non-empty string", name)
-				}
-			}
+		// Validate if it's a proper server config map
+		serverMap, ok := serverInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
 
-			// Check if httpUrl exists (for HTTP servers)
-			if httpUrl, exists := serverMap["httpUrl"]; exists {
-				if httpUrlStr, ok := httpUrl.(string); !ok || httpUrlStr == "" {
-					return fmt.Errorf("server '%s' httpUrl must be a non-empty string", name)
-				}
-			}
-
-			// Check if url exists (for SSE servers)
-			if url, exists := serverMap["url"]; exists {
-				if urlStr, ok := url.(string); !ok || urlStr == "" {
-					return fmt.Errorf("server '%s' url must be a non-empty string", name)
-				}
-			}
-
-			// Must have exactly one transport type
-			_, hasCommand := serverMap["command"]
-			_, hasHttpUrl := serverMap["httpUrl"]
-			_, hasUrl := serverMap["url"]
-
-			transportCount := 0
-			if hasCommand {
-				transportCount++
-			}
-			if hasHttpUrl {
-				transportCount++
-			}
-			if hasUrl {
-				transportCount++
-			}
-
-			if transportCount == 0 {
-				return fmt.Errorf("server '%s' must have exactly one transport type: command, httpUrl, or url", name)
-			}
-			if transportCount > 1 {
-				return fmt.Errorf("server '%s' must have exactly one transport type, found %d", name, transportCount)
-			}
+		// Reuse the same transport detection logic
+		_, _, err := detectTransportType(serverMap)
+		if err != nil {
+			return fmt.Errorf("server '%s': %w", name, err)
 		}
 	}
 
