@@ -20,6 +20,11 @@ const (
 	MultiTransport = "multi-transport"
 )
 
+// Common test client names
+const (
+	TestClientName = "test_client"
+)
+
 // Common test URLs
 const (
 	TestExampleURL  = "https://example.com"
