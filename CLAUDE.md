@@ -27,6 +27,8 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 ### Core Commands
 
 - `make build` - Build the binary to `bin/mcp-server-manager` (single binary with embedded assets)
+- `make test` - Run all Go tests
+- `make test-coverage` - Run tests with coverage report (generates `coverage.out` for SonarQube)
 - `make install-deps` - Download and organize Go dependencies
 - `make setup` - Complete production setup (build, install systemd user service, enable, start)
 - `make logs-service` - View systemd user service logs in real-time
@@ -34,6 +36,7 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 - `make sync-assets` - Sync web assets from web/ to internal/assets/web/ for embedding
 - `make test-release` - Build local .deb package, install, and restart service for testing
 - `make release VERSION=x.x.x` - Create git tag and trigger GitHub Actions release
+- `make clean` - Remove build artifacts and coverage files
 
 ### Release Commands
 
@@ -68,6 +71,26 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
 ```
 
 **Single-line fallback**: If a single-line message is provided, the Makefile will handle it properly, but multi-line format is preferred for better release notes.
+
+## Code Quality & Testing
+
+### Test Coverage
+- Project maintains **64.8% overall test coverage**
+- Coverage tracking configured for SonarQube integration
+- Run `make test-coverage` to generate coverage reports
+- Coverage file: `coverage.out` (automatically excluded from git)
+- View coverage: `go tool cover -func=coverage.out` or `go tool cover -html=coverage.out`
+
+### SonarQube Integration
+- Configuration: `sonar-project.properties`
+- Coverage reports automatically included in SonarQube analysis
+- Strategic exclusions configured:
+  - Test file naming conventions (Go uses underscores)
+  - Intentional code duplication (web/ ↔ internal/assets/web/)
+  - Test-specific cognitive complexity rules
+  - Graceful error handling patterns
+- Quality Gate: **PASSED** ✓
+- Current metrics: 6 bugs, 63 code smells, 0 vulnerabilities, A maintainability rating
 
 ## Detailed Architecture
 

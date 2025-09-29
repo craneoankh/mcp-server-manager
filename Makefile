@@ -2,7 +2,7 @@ BINARY_NAME=mcp-server-manager
 BUILD_DIR=bin
 SERVICE_NAME=mcp-server-manager.service
 
-.PHONY: build run install-service enable-service disable-service start-service stop-service status-service test clean sync-assets test-release release
+.PHONY: build run install-service enable-service disable-service start-service stop-service status-service test test-coverage clean sync-assets test-release release
 
 build: test sync-assets
 	@echo "Building $(BINARY_NAME)..."
@@ -57,9 +57,22 @@ test:
 	@echo "Running tests..."
 	@go test ./... -v
 
+test-coverage:
+	@echo "Running tests with coverage..."
+	@go test -coverprofile=coverage.out ./...
+	@echo "Coverage report generated: coverage.out"
+	@echo ""
+	@echo "View coverage in terminal:"
+	@echo "  go tool cover -func=coverage.out"
+	@echo ""
+	@echo "View coverage in browser:"
+	@echo "  go tool cover -html=coverage.out"
+
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(BUILD_DIR)
+	@rm -f coverage.out
+	@echo "Clean complete"
 
 sync-assets:
 	@echo "Syncing web assets to internal/assets/web/..."
