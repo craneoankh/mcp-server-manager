@@ -78,8 +78,9 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
 - Project maintains **64.8% overall test coverage**
 - Coverage tracking configured for SonarQube integration
 - Run `make test-coverage` to generate coverage reports
-- Coverage file: `coverage.out` (automatically excluded from git)
+- Coverage file: `coverage.out` (committed to git for SonarQube)
 - View coverage: `go tool cover -func=coverage.out` or `go tool cover -html=coverage.out`
+- **Important**: Always run `make test-coverage` before committing to keep coverage data current
 
 ### SonarQube Integration
 - Configuration: `sonar-project.properties`
@@ -91,6 +92,12 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
   - Graceful error handling patterns
 - Quality Gate: **PASSED** ✓
 - Current metrics: 6 bugs, 63 code smells, 0 vulnerabilities, A maintainability rating
+
+**GitHub Integration**:
+- Connected via SonarQube GitHub App (automatic analysis on push/PR)
+- Coverage file (`coverage.out`) is committed to git for SonarQube to analyze
+- SonarQube automatically picks up coverage data from the repository
+- Workflow: Run `make test-coverage` before committing changes to keep coverage current
 
 ## Detailed Architecture
 
