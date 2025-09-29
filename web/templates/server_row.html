@@ -1,9 +1,9 @@
 <td class="px-4 py-2">
     <div>
         <span class="font-medium" style="color: var(--text-primary);">{{.server.Name}}</span>
-        {{if .server.Env}}
+        {{if index .server.Config "env"}}
         <div class="text-xs mt-1" style="color: var(--text-muted);">
-            {{range $key, $value := .server.Env}}
+            {{range $key, $value := index .server.Config "env"}}
             <span class="rounded px-1" style="background-color: var(--bg-accent); color: var(--text-secondary);">{{$key}}</span>
             {{end}}
         </div>
@@ -12,33 +12,33 @@
 </td>
 <td class="px-4 py-2">
     <div class="text-sm" style="color: var(--text-secondary);">
-        {{if .server.Command}}
+        {{if index .server.Config "command"}}
             <div class="flex items-center space-x-1">
                 <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">STDIO</span>
-                <code>{{.server.Command}} {{range .server.Args}}{{.}} {{end}}</code>
+                <code>{{index .server.Config "command"}} {{range index .server.Config "args"}}{{.}} {{end}}</code>
             </div>
-        {{else if .server.URL}}
+        {{else if index .server.Config "url"}}
             <div class="flex items-center space-x-1">
-                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">SSE</span>
-                <code>{{.server.URL}}</code>
+                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">{{if index .server.Config "type"}}{{index .server.Config "type"}}{{else}}SSE{{end}}</span>
+                <code>{{index .server.Config "url"}}</code>
             </div>
-        {{else if .server.HttpURL}}
+        {{else if index .server.Config "httpUrl"}}
             <div class="flex items-center space-x-1">
                 <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">HTTP</span>
-                <code>{{.server.HttpURL}}</code>
+                <code>{{index .server.Config "httpUrl"}}</code>
             </div>
         {{else}}
             <span class="italic" style="color: var(--text-muted);">No transport configured</span>
         {{end}}
-        {{if .server.Headers}}
+        {{if index .server.Config "headers"}}
         <div class="text-xs mt-1" style="color: var(--text-muted);">
-            Headers: {{range $key, $value := .server.Headers}}<span class="rounded px-1" style="background-color: var(--bg-accent); color: var(--text-secondary);">{{$key}}</span> {{end}}
+            Headers: {{range $key, $value := index .server.Config "headers"}}<span class="rounded px-1" style="background-color: var(--bg-accent); color: var(--text-secondary);">{{$key}}</span> {{end}}
         </div>
         {{end}}
     </div>
 </td>
 {{range .clients}}
 <td class="px-4 py-2 text-center" id="client-{{.Name}}-server-{{$.server.Name}}">
-    {{template "client_toggle.html" dict "server" $.server "client" .Name}}
+    {{template "client_toggle.html" dict "serverName" $.server.Name "serverConfig" $.server.Config "client" .Name "clientEnabled" .Enabled}}
 </td>
 {{end}}

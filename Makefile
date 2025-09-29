@@ -2,9 +2,9 @@ BINARY_NAME=mcp-server-manager
 BUILD_DIR=bin
 SERVICE_NAME=mcp-server-manager.service
 
-.PHONY: build run install-service enable-service disable-service start-service stop-service status-service clean sync-assets test-release release
+.PHONY: build run install-service enable-service disable-service start-service stop-service status-service test clean sync-assets test-release release
 
-build: sync-assets
+build: test sync-assets
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	@go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server
@@ -53,6 +53,10 @@ status-service:
 logs-service:
 	@journalctl --user -u $(SERVICE_NAME) -f
 
+test:
+	@echo "Running tests..."
+	@go test ./... -v
+
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf $(BUILD_DIR)
@@ -64,7 +68,7 @@ sync-assets:
 	@cp -r web/static/* internal/assets/web/static/
 	@echo "Assets synced successfully"
 
-test-release: sync-assets
+test-release: test sync-assets
 	@echo "Building local test release..."
 	@goreleaser release --snapshot --clean --skip=publish
 	@echo "Installing .deb package..."
@@ -74,7 +78,7 @@ test-release: sync-assets
 	@echo ""
 	@echo "✅ Test release complete! Go to: http://localhost:6543"
 
-release: sync-assets
+release: test sync-assets
 	@echo "Creating release..."
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "❌ Error: Working directory is not clean. Please commit or stash changes."; \

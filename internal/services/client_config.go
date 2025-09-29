@@ -95,41 +95,24 @@ func (s *ClientConfigService) UpdateMCPServerStatus(clientName, serverName strin
 		rawConfig["mcpServers"] = mcpServers
 	}
 
-	server := s.findMCPServer(serverName)
-	if server == nil {
-		return fmt.Errorf("MCP server '%s' not found", serverName)
-	}
-
 	if enabled {
-		// Create server config based on the original server definition
-		serverConfig := map[string]interface{}{}
-
-		// Add transport type based on server configuration
-		if server.Command != "" {
-			// STDIO transport
-			serverConfig["command"] = server.Command
-			if len(server.Args) > 0 {
-				serverConfig["args"] = server.Args
-			}
-		} else if server.HttpURL != "" {
-			// HTTP transport
-			serverConfig["httpUrl"] = server.HttpURL
-		} else if server.URL != "" {
-			// SSE transport
-			serverConfig["url"] = server.URL
+		// Get server config from app config
+		serverConfig, exists := s.config.MCPServers[serverName]
+		if !exists {
+			return fmt.Errorf("MCP server '%s' not found in app config", serverName)
 		}
 
-		// Add common fields
-		if len(server.Env) > 0 {
-			serverConfig["env"] = server.Env
+		// CRITICAL FIX: Copy the ENTIRE server config map without filtering
+		// This preserves ALL fields: type, url, httpUrl, command, args, env, headers, etc.
+		// Deep copy to avoid mutations
+		copiedConfig := make(map[string]interface{})
+		for key, value := range serverConfig {
+			copiedConfig[key] = value
 		}
 
-		if len(server.Headers) > 0 {
-			serverConfig["headers"] = server.Headers
-		}
-
-		mcpServers[serverName] = serverConfig
+		mcpServers[serverName] = copiedConfig
 	} else {
+		// Remove server from client config
 		delete(mcpServers, serverName)
 	}
 
@@ -152,19 +135,8 @@ func (s *ClientConfigService) GetMCPServerStatus(clientName, serverName string) 
 }
 
 func (s *ClientConfigService) findClient(name string) *models.Client {
-	for _, client := range s.config.Clients {
-		if client.Name == name {
-			return &client
-		}
-	}
-	return nil
-}
-
-func (s *ClientConfigService) findMCPServer(name string) *models.MCPServer {
-	for _, server := range s.config.MCPServers {
-		if server.Name == name {
-			return &server
-		}
+	if client, exists := s.config.Clients[name]; exists {
+		return client
 	}
 	return nil
 }

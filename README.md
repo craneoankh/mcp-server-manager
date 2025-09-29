@@ -104,19 +104,28 @@ Manually edit `~/.config/mcp-server-manager/config.yaml` and restart the service
 ```yaml
 server_port: 6543
 
-mcp_servers:
-  - name: "filesystem"
+mcpServers:
+  filesystem:
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
-    clients:
-      claude_code: true
-      gemini_cli: false
+
+  context7:
+    type: "http"
+    url: "https://mcp.context7.com/mcp"
+    headers:
+      CONTEXT7_API_KEY: "your-api-key"
 
 clients:
-  - name: "claude_code"
+  claude_code:
     config_path: "~/.claude.json"
-  - name: "gemini_cli"
+    enabled:
+      - filesystem
+      - context7
+
+  gemini_cli:
     config_path: "~/.gemini/settings.json"
+    enabled:
+      - filesystem
 ```
 
 **That's it!** No more manual JSON editing across multiple files.

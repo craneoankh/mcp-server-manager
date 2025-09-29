@@ -21,8 +21,37 @@ func NewWebHandler(mcpManager *services.MCPManagerService) *WebHandler {
 }
 
 func (h *WebHandler) Index(c *gin.Context) {
-	servers := h.mcpManager.GetMCPServers()
-	clients := h.mcpManager.GetClients()
+	serversMap := h.mcpManager.GetMCPServers()
+	clientsMap := h.mcpManager.GetClients()
+
+	// Convert maps to slices for template iteration with proper structure
+	type ServerView struct {
+		Name   string
+		Config map[string]interface{}
+	}
+
+	type ClientView struct {
+		Name       string
+		ConfigPath string
+		Enabled    []string
+	}
+
+	servers := make([]ServerView, 0, len(serversMap))
+	for name, config := range serversMap {
+		servers = append(servers, ServerView{
+			Name:   name,
+			Config: config,
+		})
+	}
+
+	clients := make([]ClientView, 0, len(clientsMap))
+	for name, client := range clientsMap {
+		clients = append(clients, ClientView{
+			Name:       name,
+			ConfigPath: client.ConfigPath,
+			Enabled:    client.Enabled,
+		})
+	}
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"servers": servers,
@@ -49,21 +78,41 @@ func (h *WebHandler) ToggleClientServerHTMX(c *gin.Context) {
 		return
 	}
 
-	server, err := h.mcpManager.GetServerStatus(serverName)
+	serverConfig, err := h.mcpManager.GetServerStatus(serverName)
 	if err != nil {
 		errorHTML := renderClientToggleWithError(clientName, serverName, "Error getting server status: "+err.Error())
 		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
 		return
 	}
 
+	// Get client to check enabled status
+	clients := h.mcpManager.GetClients()
+	client, exists := clients[clientName]
+	if !exists {
+		errorHTML := renderClientToggleWithError(clientName, serverName, "Client not found")
+		c.Data(http.StatusInternalServerError, "text/html", []byte(errorHTML))
+		return
+	}
+
 	// Success - return normal toggle with hidden error container
 	c.HTML(http.StatusOK, "client_toggle.html", gin.H{
-		"server": server,
-		"client": clientName,
+		"serverName":   serverName,
+		"serverConfig": serverConfig,
+		"client":       clientName,
+		"enabled":      contains(client.Enabled, serverName),
 	})
 }
 
-// Helper functions for error handling
+// Helper functions
+
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
 
 func renderErrorBox(message string) string {
 	return fmt.Sprintf(`

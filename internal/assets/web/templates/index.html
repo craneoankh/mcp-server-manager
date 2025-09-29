@@ -90,22 +90,30 @@
 
                     <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">📝 Adding New Servers</h3>
                     <p class="mb-2">Edit your configuration file and add new entries:</p>
-                    <pre class="p-3 rounded text-xs overflow-x-auto mb-4" style="background-color: var(--code-bg); border: 1px solid var(--code-border); color: var(--code-text);"><code>mcp_servers:
+                    <pre class="p-3 rounded text-xs overflow-x-auto mb-4" style="background-color: var(--code-bg); border: 1px solid var(--code-border); color: var(--code-text);"><code>mcpServers:
   # STDIO Transport
-  - name: "your-server"
+  your-server:
     command: "npx"
     args: ["@your/mcp-server"]
     env:
       API_KEY: "your-key"
-    clients:
-      claude_code: true
-      gemini_cli: false
 
   # HTTP Transport
-  - name: "http-server"
-    http_url: "https://api.example.com/mcp"
+  http-server:
+    type: "http"
+    url: "https://api.example.com/mcp"
     headers:
       Authorization: "Bearer token"
+
+clients:
+  claude_code:
+    config_path: ~/.claude.json
+    enabled:
+      - your-server
+      - http-server
+  gemini_cli:
+    config_path: ~/.gemini/settings.json
+    enabled: []
 </code></pre>
 
                     <h3 class="text-base font-semibold mb-2" style="color: var(--text-primary);">🔄 Workflow</h3>

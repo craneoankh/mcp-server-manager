@@ -1,21 +1,23 @@
 {{$enabled := false}}
-{{if .server.Clients}}
-    {{if index .server.Clients .client}}
-        {{$enabled = index .server.Clients .client}}
+{{if .clientEnabled}}
+    {{range .clientEnabled}}
+        {{if eq . $.serverName}}
+            {{$enabled = true}}
+        {{end}}
     {{end}}
 {{end}}
 
 <!-- Error container -->
-<div id="error-{{.client}}-{{.server.Name}}" class="hidden mb-2">
+<div id="error-{{.client}}-{{.serverName}}" class="hidden mb-2">
 </div>
 
 <label class="inline-flex items-center">
     <input type="checkbox"
            class="form-checkbox h-5 w-5 text-green-600"
            {{if $enabled}}checked{{end}}
-           hx-post="/htmx/clients/{{.client}}/servers/{{.server.Name}}/toggle"
+           hx-post="/htmx/clients/{{.client}}/servers/{{.serverName}}/toggle"
            hx-vals='{"enabled": "{{if $enabled}}false{{else}}true{{end}}"}'
-           hx-target="#client-{{.client}}-server-{{.server.Name}}"
+           hx-target="#client-{{.client}}-server-{{.serverName}}"
            hx-swap="innerHTML"
            hx-trigger="click"
            _="on htmx:afterRequest trigger configChanged on body">

@@ -7,195 +7,35 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestMCPServerParsing(t *testing.T) {
-	tests := []struct {
-		name     string
-		yaml     string
-		expected MCPServer
-	}{
-		{
-			name: "STDIO Transport",
-			yaml: `
-name: "filesystem"
-command: "npx"
-args: ["@modelcontextprotocol/server-filesystem", "/path"]
-env:
-  NODE_ENV: "production"
-timeout: 30000
-trust: true
-include_tools: ["read_file", "write_file"]
-exclude_tools: ["delete_file"]
-clients:
-  claude_code: true
-`,
-			expected: MCPServer{
-				Name:            "filesystem",
-				Command:         "npx",
-				Args:            []string{"@modelcontextprotocol/server-filesystem", "/path"},
-				Env:             map[string]string{"NODE_ENV": "production"},
-				Timeout:         30000,
-				Trust:           true,
-				IncludeTools:    []string{"read_file", "write_file"},
-				ExcludeTools:    []string{"delete_file"},
-				Clients:         map[string]bool{"claude_code": true},
-			},
-		},
-		{
-			name: "HTTP Transport",
-			yaml: `
-name: "context7"
-http_url: "https://mcp.context7.com/mcp"
-headers:
-  Authorization: "Bearer token123"
-  Content-Type: "application/json"
-timeout: 5000
-clients:
-  claude_code: false
-  gemini_cli: true
-`,
-			expected: MCPServer{
-				Name:    "context7",
-				HttpURL: "https://mcp.context7.com/mcp",
-				Headers: map[string]string{
-					"Authorization": "Bearer token123",
-					"Content-Type":  "application/json",
-				},
-				Timeout:         5000,
-				Clients:         map[string]bool{"claude_code": false, "gemini_cli": true},
-			},
-		},
-		{
-			name: "SSE Transport",
-			yaml: `
-name: "sse_server"
-url: "http://localhost:8080/sse"
-headers:
-  X-API-Key: "secret123"
-timeout: 10000
-clients:
-  claude_code: true
-`,
-			expected: MCPServer{
-				Name:            "sse_server",
-				URL:             "http://localhost:8080/sse",
-				Headers:         map[string]string{"X-API-Key": "secret123"},
-				Timeout:         10000,
-				Clients:         map[string]bool{"claude_code": true},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var server MCPServer
-			err := yaml.Unmarshal([]byte(tt.yaml), &server)
-			if err != nil {
-				t.Fatalf("Failed to parse YAML: %v", err)
-			}
-
-			// Compare fields
-			if server.Name != tt.expected.Name {
-				t.Errorf("Name: got %q, want %q", server.Name, tt.expected.Name)
-			}
-			if server.Command != tt.expected.Command {
-				t.Errorf("Command: got %q, want %q", server.Command, tt.expected.Command)
-			}
-			if server.URL != tt.expected.URL {
-				t.Errorf("URL: got %q, want %q", server.URL, tt.expected.URL)
-			}
-			if server.HttpURL != tt.expected.HttpURL {
-				t.Errorf("HttpURL: got %q, want %q", server.HttpURL, tt.expected.HttpURL)
-			}
-			if server.Timeout != tt.expected.Timeout {
-				t.Errorf("Timeout: got %d, want %d", server.Timeout, tt.expected.Timeout)
-			}
-			if server.Trust != tt.expected.Trust {
-				t.Errorf("Trust: got %t, want %t", server.Trust, tt.expected.Trust)
-			}
-
-			// Compare slices and maps
-			if !equalStringSlices(server.Args, tt.expected.Args) {
-				t.Errorf("Args: got %v, want %v", server.Args, tt.expected.Args)
-			}
-			if !equalStringSlices(server.IncludeTools, tt.expected.IncludeTools) {
-				t.Errorf("IncludeTools: got %v, want %v", server.IncludeTools, tt.expected.IncludeTools)
-			}
-			if !equalStringSlices(server.ExcludeTools, tt.expected.ExcludeTools) {
-				t.Errorf("ExcludeTools: got %v, want %v", server.ExcludeTools, tt.expected.ExcludeTools)
-			}
-			if !equalStringMaps(server.Env, tt.expected.Env) {
-				t.Errorf("Env: got %v, want %v", server.Env, tt.expected.Env)
-			}
-			if !equalStringMaps(server.Headers, tt.expected.Headers) {
-				t.Errorf("Headers: got %v, want %v", server.Headers, tt.expected.Headers)
-			}
-			if !equalBoolMaps(server.Clients, tt.expected.Clients) {
-				t.Errorf("Clients: got %v, want %v", server.Clients, tt.expected.Clients)
-			}
-		})
-	}
-}
-
-func TestMCPServerJSONSerialization(t *testing.T) {
-	server := MCPServer{
-		Name:            "test_server",
-		Command:         "python",
-		Args:            []string{"-m", "server"},
-		HttpURL:         "https://example.com/mcp", // This should be ignored due to having Command
-		Env:             map[string]string{"API_KEY": "secret"},
-		Headers:         map[string]string{"Auth": "Bearer token"},
-		Timeout:         5000,
-		Trust:           true,
-		IncludeTools:    []string{"tool1", "tool2"},
-		ExcludeTools:    []string{"danger"},
-		Clients:         map[string]bool{"claude": true, "gemini": false},
-	}
-
-	// Test JSON serialization
-	jsonData, err := json.Marshal(server)
-	if err != nil {
-		t.Fatalf("Failed to marshal JSON: %v", err)
-	}
-
-	// Test JSON deserialization
-	var parsedServer MCPServer
-	err = json.Unmarshal(jsonData, &parsedServer)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	// Verify key fields
-	if parsedServer.Name != server.Name {
-		t.Errorf("Name: got %q, want %q", parsedServer.Name, server.Name)
-	}
-	if parsedServer.Command != server.Command {
-		t.Errorf("Command: got %q, want %q", parsedServer.Command, server.Command)
-	}
-	if parsedServer.HttpURL != server.HttpURL {
-		t.Errorf("HttpURL: got %q, want %q", parsedServer.HttpURL, server.HttpURL)
-	}
-}
-
 func TestConfigStructure(t *testing.T) {
 	configYAML := `
 server_port: 6543
-mcp_servers:
-  - name: "filesystem"
+mcpServers:
+  filesystem:
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem"]
-    clients:
-      claude_code: true
-  - name: "context7"
-    http_url: "https://mcp.context7.com/mcp"
+    env:
+      NODE_ENV: "production"
+  context7:
+    type: "http"
+    url: "https://mcp.context7.com/mcp"
     headers:
       CONTEXT7_API_KEY: "key123"
-    clients:
-      gemini_cli: true
+      Accept: "application/json"
+  context7-gemini:
+    httpUrl: "https://mcp.context7.com/mcp"
+    headers:
+      CONTEXT7_API_KEY: "key123"
 clients:
-  - name: "claude_code"
+  claude_code:
     config_path: "~/.claude.json"
-  - name: "gemini_cli"
+    enabled:
+      - filesystem
+      - context7
+  gemini_cli:
     config_path: "~/.gemini/settings.json"
+    enabled:
+      - context7-gemini
 `
 
 	var config Config
@@ -208,62 +48,150 @@ clients:
 		t.Errorf("ServerPort: got %d, want %d", config.ServerPort, 6543)
 	}
 
-	if len(config.MCPServers) != 2 {
-		t.Fatalf("Expected 2 MCP servers, got %d", len(config.MCPServers))
+	if len(config.MCPServers) != 3 {
+		t.Fatalf("Expected 3 MCP servers, got %d", len(config.MCPServers))
 	}
 
 	if len(config.Clients) != 2 {
 		t.Fatalf("Expected 2 clients, got %d", len(config.Clients))
 	}
 
-	// Check first server (STDIO)
-	fs := config.MCPServers[0]
-	if fs.Name != "filesystem" || fs.Command != "npx" {
-		t.Errorf("First server: got name=%q command=%q, want name=%q command=%q",
-			fs.Name, fs.Command, "filesystem", "npx")
+	// Check filesystem server (STDIO)
+	fs, exists := config.MCPServers["filesystem"]
+	if !exists {
+		t.Fatal("filesystem server not found")
+	}
+	if fs["command"] != "npx" {
+		t.Errorf("filesystem command: got %v, want 'npx'", fs["command"])
 	}
 
-	// Check second server (HTTP)
-	ctx7 := config.MCPServers[1]
-	if ctx7.Name != "context7" || ctx7.HttpURL != "https://mcp.context7.com/mcp" {
-		t.Errorf("Second server: got name=%q http_url=%q, want name=%q http_url=%q",
-			ctx7.Name, ctx7.HttpURL, "context7", "https://mcp.context7.com/mcp")
+	// Check context7 server (HTTP with type field)
+	ctx7, exists := config.MCPServers["context7"]
+	if !exists {
+		t.Fatal("context7 server not found")
+	}
+	if ctx7["type"] != "http" {
+		t.Errorf("context7 type: got %v, want 'http'", ctx7["type"])
+	}
+	if ctx7["url"] != "https://mcp.context7.com/mcp" {
+		t.Errorf("context7 url: got %v, want 'https://mcp.context7.com/mcp'", ctx7["url"])
+	}
+
+	// Check context7-gemini server (HTTP with httpUrl field)
+	ctx7gem, exists := config.MCPServers["context7-gemini"]
+	if !exists {
+		t.Fatal("context7-gemini server not found")
+	}
+	if ctx7gem["httpUrl"] != "https://mcp.context7.com/mcp" {
+		t.Errorf("context7-gemini httpUrl: got %v, want 'https://mcp.context7.com/mcp'", ctx7gem["httpUrl"])
+	}
+
+	// Check clients
+	claudeClient, exists := config.Clients["claude_code"]
+	if !exists {
+		t.Fatal("claude_code client not found")
+	}
+	if claudeClient.ConfigPath != "~/.claude.json" {
+		t.Errorf("claude_code config_path: got %q, want '~/.claude.json'", claudeClient.ConfigPath)
+	}
+	if len(claudeClient.Enabled) != 2 {
+		t.Errorf("claude_code enabled: got %d servers, want 2", len(claudeClient.Enabled))
+	}
+
+	geminiClient, exists := config.Clients["gemini_cli"]
+	if !exists {
+		t.Fatal("gemini_cli client not found")
+	}
+	if len(geminiClient.Enabled) != 1 {
+		t.Errorf("gemini_cli enabled: got %d servers, want 1", len(geminiClient.Enabled))
 	}
 }
 
-// Helper functions
-func equalStringSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
+func TestConfigJSONSerialization(t *testing.T) {
+	config := Config{
+		ServerPort: 6543,
+		MCPServers: map[string]map[string]interface{}{
+			"test-server": {
+				"command": "npx",
+				"args":    []interface{}{"test"},
+				"env": map[string]interface{}{
+					"KEY": "value",
+				},
+			},
+		},
+		Clients: map[string]*Client{
+			"test_client": {
+				ConfigPath: "~/.test.json",
+				Enabled:    []string{"test-server"},
+			},
+		},
 	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
+
+	// Test JSON serialization
+	jsonData, err := json.Marshal(config)
+	if err != nil {
+		t.Fatalf("Failed to marshal JSON: %v", err)
 	}
-	return true
+
+	// Test JSON deserialization
+	var parsedConfig Config
+	err = json.Unmarshal(jsonData, &parsedConfig)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	// Verify key fields
+	if parsedConfig.ServerPort != config.ServerPort {
+		t.Errorf("ServerPort: got %d, want %d", parsedConfig.ServerPort, config.ServerPort)
+	}
+	if len(parsedConfig.MCPServers) != len(config.MCPServers) {
+		t.Errorf("MCPServers count: got %d, want %d", len(parsedConfig.MCPServers), len(config.MCPServers))
+	}
+	if len(parsedConfig.Clients) != len(config.Clients) {
+		t.Errorf("Clients count: got %d, want %d", len(parsedConfig.Clients), len(config.Clients))
+	}
 }
 
-func equalStringMaps(a, b map[string]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		if b[k] != v {
-			return false
-		}
-	}
-	return true
-}
+func TestFieldPreservation(t *testing.T) {
+	// Test that ALL fields are preserved, including custom ones
+	configYAML := `
+mcpServers:
+  custom-server:
+    type: "http"
+    url: "https://example.com"
+    customField: "customValue"
+    nestedCustom:
+      foo: "bar"
+      baz: 123
+clients:
+  test:
+    config_path: "~/.test.json"
+    enabled: []
+server_port: 6543
+`
 
-func equalBoolMaps(a, b map[string]bool) bool {
-	if len(a) != len(b) {
-		return false
+	var config Config
+	err := yaml.Unmarshal([]byte(configYAML), &config)
+	if err != nil {
+		t.Fatalf("Failed to parse YAML: %v", err)
 	}
-	for k, v := range a {
-		if b[k] != v {
-			return false
-		}
+
+	server, exists := config.MCPServers["custom-server"]
+	if !exists {
+		t.Fatal("custom-server not found")
 	}
-	return true
+
+	// Verify all fields are preserved
+	if server["type"] != "http" {
+		t.Errorf("type field not preserved")
+	}
+	if server["url"] != "https://example.com" {
+		t.Errorf("url field not preserved")
+	}
+	if server["customField"] != "customValue" {
+		t.Errorf("customField not preserved")
+	}
+	if server["nestedCustom"] == nil {
+		t.Errorf("nestedCustom not preserved")
+	}
 }

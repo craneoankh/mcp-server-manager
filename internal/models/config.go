@@ -1,38 +1,16 @@
 package models
 
-type MCPServer struct {
-	Name            string            `yaml:"name" json:"name"`
-
-	// Transport Types (exactly one required)
-	Command         string            `yaml:"command,omitempty" json:"command,omitempty"`           // STDIO transport
-	URL             string            `yaml:"url,omitempty" json:"url,omitempty"`                   // SSE transport
-	HttpURL         string            `yaml:"http_url,omitempty" json:"httpUrl,omitempty"`         // HTTP transport
-
-	// Transport-specific properties
-	Args            []string          `yaml:"args,omitempty" json:"args,omitempty"`                // STDIO only
-	Cwd             string            `yaml:"cwd,omitempty" json:"cwd,omitempty"`                  // STDIO only
-	Headers         map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`          // HTTP/SSE only
-
-	// Common properties
-	Env             map[string]string `yaml:"env,omitempty" json:"env,omitempty"`                  // Environment variables
-	Timeout         int               `yaml:"timeout,omitempty" json:"timeout,omitempty"`          // Request timeout in ms
-	Trust           bool              `yaml:"trust,omitempty" json:"trust,omitempty"`              // Bypass confirmations
-	IncludeTools    []string          `yaml:"include_tools,omitempty" json:"includeTools,omitempty"` // Tool whitelist
-	ExcludeTools    []string          `yaml:"exclude_tools,omitempty" json:"excludeTools,omitempty"` // Tool blacklist
-
-	// Manager-specific properties
-	Clients         map[string]bool   `yaml:"clients" json:"clients"`
-}
-
+// Client represents an MCP client configuration
 type Client struct {
-	Name       string `yaml:"name" json:"name"`
-	ConfigPath string `yaml:"config_path" json:"config_path"`
+	ConfigPath string   `yaml:"config_path" json:"config_path"`
+	Enabled    []string `yaml:"enabled,omitempty" json:"enabled,omitempty"` // List of enabled server names
 }
 
+// Config is the main application configuration
 type Config struct {
-	MCPServers []MCPServer `yaml:"mcp_servers" json:"mcp_servers"`
-	Clients    []Client    `yaml:"clients" json:"clients"`
-	ServerPort int         `yaml:"server_port" json:"server_port"`
+	MCPServers map[string]map[string]interface{} `yaml:"mcpServers" json:"mcpServers"` // Server name -> config map
+	Clients    map[string]*Client                `yaml:"clients" json:"clients"`       // Client name -> client config
+	ServerPort int                               `yaml:"server_port" json:"server_port"`
 }
 
 type ClientConfig struct {

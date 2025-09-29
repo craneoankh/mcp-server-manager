@@ -28,104 +28,116 @@ func (v *ValidatorService) ValidateConfig(config *models.Config) error {
 		return fmt.Errorf("no clients configured")
 	}
 
-	for _, server := range config.MCPServers {
-		if err := v.ValidateMCPServer(&server); err != nil {
-			return fmt.Errorf("invalid MCP server '%s': %w", server.Name, err)
+	// Validate each MCP server
+	for serverName, serverConfig := range config.MCPServers {
+		if err := v.ValidateMCPServerConfig(serverName, serverConfig); err != nil {
+			return fmt.Errorf("invalid MCP server '%s': %w", serverName, err)
 		}
 	}
 
-	for _, client := range config.Clients {
-		if err := v.ValidateClient(&client); err != nil {
-			return fmt.Errorf("invalid client '%s': %w", client.Name, err)
+	// Validate each client
+	for clientName, client := range config.Clients {
+		if err := v.ValidateClient(clientName, client); err != nil {
+			return fmt.Errorf("invalid client '%s': %w", clientName, err)
+		}
+
+		// Validate that enabled servers exist
+		for _, serverName := range client.Enabled {
+			if _, exists := config.MCPServers[serverName]; !exists {
+				return fmt.Errorf("client '%s' references non-existent server '%s'", clientName, serverName)
+			}
 		}
 	}
 
 	return nil
 }
 
-func (v *ValidatorService) ValidateMCPServer(server *models.MCPServer) error {
-	if server.Name == "" {
+// ValidateMCPServerConfig validates a server configuration map
+func (v *ValidatorService) ValidateMCPServerConfig(serverName string, serverConfig map[string]interface{}) error {
+	if strings.TrimSpace(serverName) == "" {
 		return fmt.Errorf("server name cannot be empty")
 	}
 
 	// Validate transport type (exactly one required)
+	hasCommand := false
+	hasURL := false
+	hasHttpURL := false
+
+	if command, exists := serverConfig["command"]; exists && command != nil {
+		if cmdStr, ok := command.(string); ok && strings.TrimSpace(cmdStr) != "" {
+			hasCommand = true
+			// Validate command is in PATH
+			if !v.IsCommandAvailable(cmdStr) {
+				return fmt.Errorf("command '%s' not found in PATH", cmdStr)
+			}
+		}
+	}
+
+	if url, exists := serverConfig["url"]; exists && url != nil {
+		if urlStr, ok := url.(string); ok && strings.TrimSpace(urlStr) != "" {
+			hasURL = true
+			if err := v.validateURL(urlStr); err != nil {
+				return fmt.Errorf("invalid URL '%s': %w", urlStr, err)
+			}
+		}
+	}
+
+	if httpUrl, exists := serverConfig["httpUrl"]; exists && httpUrl != nil {
+		if httpUrlStr, ok := httpUrl.(string); ok && strings.TrimSpace(httpUrlStr) != "" {
+			hasHttpURL = true
+			if err := v.validateURL(httpUrlStr); err != nil {
+				return fmt.Errorf("invalid httpUrl '%s': %w", httpUrlStr, err)
+			}
+		}
+	}
+
 	transportCount := 0
-	if server.Command != "" {
+	if hasCommand {
 		transportCount++
 	}
-	if server.URL != "" {
+	if hasURL {
 		transportCount++
 	}
-	if server.HttpURL != "" {
+	if hasHttpURL {
 		transportCount++
 	}
 
 	if transportCount == 0 {
-		return fmt.Errorf("server must have exactly one transport type: command, url, or http_url")
+		return fmt.Errorf("server must have exactly one transport type: command, url, or httpUrl")
 	}
 	if transportCount > 1 {
 		return fmt.Errorf("server must have exactly one transport type, found %d", transportCount)
 	}
 
-	// Validate STDIO transport
-	if server.Command != "" {
-		if !v.IsCommandAvailable(server.Command) {
-			return fmt.Errorf("command '%s' not found in PATH", server.Command)
-		}
-		// Args and Cwd are only valid for STDIO transport
-	}
-
-	// Validate SSE transport
-	if server.URL != "" {
-		if err := v.validateURL(server.URL); err != nil {
-			return fmt.Errorf("invalid SSE URL '%s': %w", server.URL, err)
-		}
-		// Headers are valid for SSE transport
-	}
-
-	// Validate HTTP transport
-	if server.HttpURL != "" {
-		if err := v.validateURL(server.HttpURL); err != nil {
-			return fmt.Errorf("invalid HTTP URL '%s': %w", server.HttpURL, err)
-		}
-		// Headers are valid for HTTP transport
-	}
-
-	// Validate common properties
-	if server.Timeout < 0 {
-		return fmt.Errorf("timeout cannot be negative")
-	}
-
-	// Validate environment variables
-	for key, value := range server.Env {
-		if strings.TrimSpace(key) == "" {
-			return fmt.Errorf("environment variable key cannot be empty")
-		}
-		if strings.Contains(key, "=") {
-			return fmt.Errorf("environment variable key cannot contain '='")
-		}
-		if strings.TrimSpace(value) == "" {
-			return fmt.Errorf("environment variable value for '%s' cannot be empty", key)
+	// Validate timeout if present
+	if timeout, exists := serverConfig["timeout"]; exists && timeout != nil {
+		if timeoutNum, ok := timeout.(int); ok && timeoutNum < 0 {
+			return fmt.Errorf("timeout cannot be negative")
 		}
 	}
 
-	// Validate tool lists
-	for _, tool := range server.IncludeTools {
-		if strings.TrimSpace(tool) == "" {
-			return fmt.Errorf("include_tools cannot contain empty tool names")
-		}
-	}
-	for _, tool := range server.ExcludeTools {
-		if strings.TrimSpace(tool) == "" {
-			return fmt.Errorf("exclude_tools cannot contain empty tool names")
+	// Validate environment variables if present
+	if env, exists := serverConfig["env"]; exists && env != nil {
+		if envMap, ok := env.(map[string]interface{}); ok {
+			for key, value := range envMap {
+				if strings.TrimSpace(key) == "" {
+					return fmt.Errorf("environment variable key cannot be empty")
+				}
+				if strings.Contains(key, "=") {
+					return fmt.Errorf("environment variable key cannot contain '='")
+				}
+				if valStr, ok := value.(string); !ok || strings.TrimSpace(valStr) == "" {
+					return fmt.Errorf("environment variable value for '%s' cannot be empty", key)
+				}
+			}
 		}
 	}
 
 	return nil
 }
 
-func (v *ValidatorService) ValidateClient(client *models.Client) error {
-	if client.Name == "" {
+func (v *ValidatorService) ValidateClient(clientName string, client *models.Client) error {
+	if strings.TrimSpace(clientName) == "" {
 		return fmt.Errorf("client name cannot be empty")
 	}
 

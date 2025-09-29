@@ -86,48 +86,49 @@ func createDefaultConfig(configPath string) error {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	defaultConfig := `# MCP Server Manager Configuration
+	defaultConfig := `# MCP Server Manager Configuration v2.0
+# This matches standard MCP client config format for maximum compatibility
 # Edit this file to configure your MCP servers and clients
-# Full MCP specification support: STDIO, SSE, and HTTP transports
 
 server_port: 6543
 
-mcp_servers:
-  # STDIO Transport Example (most common)
-  - name: "filesystem"
+# MCP Servers - Standard format matching MCP clients
+# Server names are keys; configurations are values (pass through to clients)
+mcpServers:
+  # STDIO Transport Example (command-based)
+  filesystem:
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
     env:
       NODE_ENV: "production"
-    timeout: 30000  # 30 seconds
-    trust: false    # Set to true to bypass tool confirmations
-    clients:
-      claude_code: false
-      gemini_cli: false
+    timeout: 30000  # Optional: request timeout in ms
+    trust: false    # Optional: bypass tool confirmations
 
-  # HTTP Transport Example
-  - name: "context7"
-    http_url: "https://mcp.context7.com/mcp"
+  # HTTP Transport Example (with type field for VS Code compatibility)
+  context7-vscode:
+    type: "http"
+    url: "https://mcp.context7.com/mcp"
     headers:
       CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
-      Content-Type: "application/json"
-    timeout: 10000  # 10 seconds
-    clients:
-      claude_code: false
-      gemini_cli: false
+      Accept: "application/json, text/event-stream"
+    timeout: 10000
+
+  # HTTP Transport Example (httpUrl variant for Gemini CLI)
+  context7-gemini:
+    httpUrl: "https://mcp.context7.com/mcp"
+    headers:
+      CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
+      Accept: "application/json, text/event-stream"
 
   # SSE Transport Example (uncomment to use)
-  # - name: "sse_server"
+  # sse_server:
   #   url: "http://localhost:8080/sse"
   #   headers:
   #     Authorization: "Bearer YOUR_TOKEN"
   #   timeout: 15000
-  #   clients:
-  #     claude_code: false
-  #     gemini_cli: false
 
   # Advanced STDIO Example with tool filtering
-  # - name: "git_server"
+  # git_server:
   #   command: "npx"
   #   args: ["@modelcontextprotocol/server-git", "--repository", "/path/to/repo"]
   #   cwd: "/path/to/working/directory"
@@ -136,30 +137,32 @@ mcp_servers:
   #     GIT_AUTHOR_EMAIL: "user@example.com"
   #   timeout: 45000
   #   trust: false
-  #   include_tools: ["git_log", "git_diff", "git_show"]  # Only allow these tools
-  #   exclude_tools: ["git_push", "git_reset"]           # Block dangerous tools
-  #   clients:
-  #     claude_code: false
-  #     gemini_cli: false
+  #   includeTools: ["git_log", "git_diff", "git_show"]  # Only allow these tools
+  #   excludeTools: ["git_push", "git_reset"]            # Block dangerous tools
 
+# MCP Clients - Configure which servers each client uses
 clients:
-  - name: "claude_code"
+  claude_code:
     config_path: "~/.claude.json"
-  - name: "gemini_cli"
-    config_path: "~/.gemini/settings.json"
+    enabled:
+      - filesystem
+      # - context7-vscode
 
-# Transport Types:
-# - STDIO (command + args): Most common, runs local processes
-# - HTTP (http_url + headers): For remote HTTP endpoints
-# - SSE (url + headers): For Server-Sent Events endpoints
-#
-# Security Options:
-# - trust: false (default) = Show confirmations for tool calls
-# - trust: true = Bypass all confirmations (use carefully!)
-# - include_tools: Whitelist specific tools only
-# - exclude_tools: Blacklist dangerous tools
-#
-# Restart the service after making changes: systemctl --user restart mcp-server-manager
+  gemini_cli:
+    config_path: "~/.gemini/settings.json"
+    enabled:
+      # - context7-gemini
+      # - filesystem
+
+# Notes:
+# - ALL fields in mcpServers are passed through to client configs (no filtering)
+# - Supports any MCP spec fields: type, url, httpUrl, command, args, env, headers, etc.
+# - Use 'enabled' array per client to control which servers each client uses
+# - Transport Types:
+#   * STDIO: command + args (local processes)
+#   * HTTP: url/httpUrl + headers (remote HTTP endpoints)
+#   * SSE: url + headers (Server-Sent Events)
+# - Restart service after changes: systemctl --user restart mcp-server-manager
 `
 
 	if err := os.WriteFile(configPath, []byte(defaultConfig), 0644); err != nil {

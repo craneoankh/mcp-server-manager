@@ -23,53 +23,90 @@ func NewMCPManagerService(cfg *models.Config, configPath string) *MCPManagerServ
 	}
 }
 
-func (s *MCPManagerService) GetMCPServers() []models.MCPServer {
+// GetMCPServers returns the server map
+func (s *MCPManagerService) GetMCPServers() map[string]map[string]interface{} {
 	return s.config.MCPServers
 }
 
-func (s *MCPManagerService) GetClients() []models.Client {
+// GetClients returns the client map
+func (s *MCPManagerService) GetClients() map[string]*models.Client {
 	return s.config.Clients
 }
 
-
+// ToggleClientMCPServer enables or disables a server for a specific client
 func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string, enabled bool) error {
-	for i, server := range s.config.MCPServers {
-		if server.Name == serverName {
-			if s.config.MCPServers[i].Clients == nil {
-				s.config.MCPServers[i].Clients = make(map[string]bool)
-			}
-			s.config.MCPServers[i].Clients[clientName] = enabled
-
-			if err := s.saveConfig(); err != nil {
-				return err
-			}
-
-			return s.clientConfigService.UpdateMCPServerStatus(clientName, serverName, enabled)
-		}
+	// Check if client exists
+	client, exists := s.config.Clients[clientName]
+	if !exists {
+		return fmt.Errorf("client '%s' not found", clientName)
 	}
-	return fmt.Errorf("MCP server '%s' not found", serverName)
+
+	// Check if server exists
+	if _, exists := s.config.MCPServers[serverName]; !exists {
+		return fmt.Errorf("MCP server '%s' not found", serverName)
+	}
+
+	// Initialize enabled list if nil
+	if client.Enabled == nil {
+		client.Enabled = []string{}
+	}
+
+	// Update enabled list
+	if enabled {
+		// Add server to enabled list if not already present
+		found := false
+		for _, name := range client.Enabled {
+			if name == serverName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			client.Enabled = append(client.Enabled, serverName)
+		}
+	} else {
+		// Remove server from enabled list
+		newEnabled := []string{}
+		for _, name := range client.Enabled {
+			if name != serverName {
+				newEnabled = append(newEnabled, name)
+			}
+		}
+		client.Enabled = newEnabled
+	}
+
+	// Save config
+	if err := s.saveConfig(); err != nil {
+		return err
+	}
+
+	// Update client config file
+	return s.clientConfigService.UpdateMCPServerStatus(clientName, serverName, enabled)
 }
 
-func (s *MCPManagerService) GetServerStatus(serverName string) (*models.MCPServer, error) {
-	for _, server := range s.config.MCPServers {
-		if server.Name == serverName {
-			return &server, nil
-		}
+// GetServerStatus returns server configuration by name
+func (s *MCPManagerService) GetServerStatus(serverName string) (map[string]interface{}, error) {
+	serverConfig, exists := s.config.MCPServers[serverName]
+	if !exists {
+		return nil, fmt.Errorf("MCP server '%s' not found", serverName)
 	}
-	return nil, fmt.Errorf("MCP server '%s' not found", serverName)
+	return serverConfig, nil
 }
 
+// SyncAllClients synchronizes all client configurations based on enabled lists
 func (s *MCPManagerService) SyncAllClients() error {
-	for _, client := range s.config.Clients {
-		for _, server := range s.config.MCPServers {
-			// Servers are enabled by default, unless client-specific override disables them
-			enabled := true
-			if clientEnabled, exists := server.Clients[client.Name]; exists {
-				enabled = clientEnabled
-			}
+	for clientName, client := range s.config.Clients {
+		// Build set of enabled servers for quick lookup
+		enabledSet := make(map[string]bool)
+		for _, serverName := range client.Enabled {
+			enabledSet[serverName] = true
+		}
 
-			if err := s.clientConfigService.UpdateMCPServerStatus(client.Name, server.Name, enabled); err != nil {
-				return fmt.Errorf("failed to sync client '%s': %w", client.Name, err)
+		// Sync each server in the config
+		for serverName := range s.config.MCPServers {
+			enabled := enabledSet[serverName]
+			if err := s.clientConfigService.UpdateMCPServerStatus(clientName, serverName, enabled); err != nil {
+				return fmt.Errorf("failed to sync client '%s': %w", clientName, err)
 			}
 		}
 	}
@@ -84,30 +121,25 @@ func (s *MCPManagerService) ValidateConfig() error {
 	return s.validator.ValidateConfig(s.config)
 }
 
-func (s *MCPManagerService) AddServer(server *models.MCPServer) error {
-	// Validate the server first
-	if err := s.validator.ValidateMCPServer(server); err != nil {
+// AddServer adds a new MCP server to the configuration
+func (s *MCPManagerService) AddServer(serverName string, serverConfig map[string]interface{}) error {
+	// Validate the server config
+	if err := s.validator.ValidateMCPServerConfig(serverName, serverConfig); err != nil {
 		return fmt.Errorf("server validation failed: %w", err)
 	}
 
 	// Check if server with this name already exists
-	for _, existingServer := range s.config.MCPServers {
-		if existingServer.Name == server.Name {
-			return fmt.Errorf("server with name '%s' already exists", server.Name)
-		}
+	if _, exists := s.config.MCPServers[serverName]; exists {
+		return fmt.Errorf("server with name '%s' already exists", serverName)
 	}
 
-	// Initialize clients map if not provided
-	if server.Clients == nil {
-		server.Clients = make(map[string]bool)
-		// Set all existing clients to false by default
-		for _, client := range s.config.Clients {
-			server.Clients[client.Name] = false
-		}
+	// Initialize servers map if nil
+	if s.config.MCPServers == nil {
+		s.config.MCPServers = make(map[string]map[string]interface{})
 	}
 
 	// Add the server to the config
-	s.config.MCPServers = append(s.config.MCPServers, *server)
+	s.config.MCPServers[serverName] = serverConfig
 
 	// Save the config
 	return s.saveConfig()

@@ -1,23 +1,43 @@
 server_port: 6543
 
-mcp_servers:
-  - name: "filesystem"
-    command: "npx"
-    args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
-    clients:
-      claude_code: true
-      gemini_cli: false
-
-  - name: "context7"
-    http_url: "https://mcp.context7.com/mcp"
+# MCP Servers - Simplified example config
+mcpServers:
+  # Context7 for Claude Code (VS Code format with type field)
+  context7-claude:
+    type: http
+    url: "https://mcp.context7.com/mcp"
     headers:
-      CONTEXT7_API_KEY: "ADD_YOUR_API_KEY"
-    clients:
-      claude_code: false
-      gemini_cli: false
+      CONTEXT7_API_KEY: "your-api-key-here"
+      Accept: "application/json, text/event-stream"
 
+  # Context7 for Gemini CLI (httpUrl format)
+  context7-gemini:
+    httpUrl: "https://mcp.context7.com/mcp"
+    headers:
+      CONTEXT7_API_KEY: "your-api-key-here"
+      Accept: "application/json, text/event-stream"
+
+  # n8n MCP integration using Coolify Cloud
+  n8n-mcp:
+    command: npx
+    args:
+      - n8n-mcp
+    env:
+      DISABLE_CONSOLE_OUTPUT: "true"
+      LOG_LEVEL: error
+      MCP_MODE: stdio
+      N8N_API_KEY: "your-n8n-api-key"
+      N8N_API_URL: "https://your-instance.coolify.cloud"
+
+# MCP Clients configuration
 clients:
-  - name: "claude_code"
-    config_path: "~/.claude.json"
-  - name: "gemini_cli"
-    config_path: "~/.gemini/settings.json"
+  claude_code:
+    config_path: ~/.claude.json
+    enabled:
+      - context7-claude
+
+  gemini_cli:
+    config_path: ~/.gemini/settings.json
+    enabled:
+      - context7-gemini
+      - n8n-mcp

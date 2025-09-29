@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/vlazic/mcp-server-manager/internal/models"
 	"github.com/vlazic/mcp-server-manager/internal/services"
 )
 
@@ -72,16 +71,40 @@ func (h *APIHandler) SyncAllClients(c *gin.Context) {
 }
 
 func (h *APIHandler) AddServer(c *gin.Context) {
-	var server models.MCPServer
-	if err := c.ShouldBindJSON(&server); err != nil {
+	// Expect JSON in format: {"mcpServers": {"server-name": {config...}}}
+	var requestBody struct {
+		MCPServers map[string]map[string]interface{} `json:"mcpServers"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})
 		return
 	}
 
-	if err := h.mcpManager.AddServer(&server); err != nil {
+	if len(requestBody.MCPServers) != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Must provide exactly one server in mcpServers"})
+		return
+	}
+
+	// Extract the single server name and config
+	var serverName string
+	var serverConfig map[string]interface{}
+	for name, config := range requestBody.MCPServers {
+		serverName = name
+		serverConfig = config
+		break
+	}
+
+	if err := h.mcpManager.AddServer(serverName, serverConfig); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "server": server})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"server": map[string]interface{}{
+			"name":   serverName,
+			"config": serverConfig,
+		},
+	})
 }
