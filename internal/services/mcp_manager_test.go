@@ -7,6 +7,7 @@ import (
 
 	"github.com/vlazic/mcp-server-manager/internal/config"
 	"github.com/vlazic/mcp-server-manager/internal/models"
+	"github.com/vlazic/mcp-server-manager/internal/services/testutil"
 )
 
 // MCPManagerService Tests
@@ -102,14 +103,14 @@ func TestToggleClientMCPServer(t *testing.T) {
 	t.Run("Enable server", func(t *testing.T) {
 		// Create fresh test environment for this sub-test
 		tempDir := t.TempDir()
-		configPath := filepath.Join(tempDir, "config.yaml")
-		clientConfigPath := filepath.Join(tempDir, "client.json")
+		configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
+		clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 		cfg := &models.Config{
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{
 				{
-					Name: "test-server",
+					Name: testutil.TestServerName,
 					Config: map[string]interface{}{
 						"command": "echo",
 						"args":    []interface{}{"test"},
@@ -126,7 +127,7 @@ func TestToggleClientMCPServer(t *testing.T) {
 
 		service := NewMCPManagerService(cfg, configPath)
 
-		err := service.ToggleClientMCPServer("test_client", "test-server", true)
+		err := service.ToggleClientMCPServer("test_client", testutil.TestServerName, true)
 		if err != nil {
 			t.Fatalf("ToggleClientMCPServer failed: %v", err)
 		}
@@ -137,7 +138,7 @@ func TestToggleClientMCPServer(t *testing.T) {
 			t.Errorf("Expected 1 enabled server, got %d", len(client.Enabled))
 		}
 
-		if client.Enabled[0] != "test-server" {
+		if client.Enabled[0] != testutil.TestServerName {
 			t.Errorf("Expected 'test-server' in enabled list, got '%s'", client.Enabled[0])
 		}
 
@@ -150,14 +151,14 @@ func TestToggleClientMCPServer(t *testing.T) {
 	t.Run("Disable server", func(t *testing.T) {
 		// Create fresh test environment for this sub-test
 		tempDir := t.TempDir()
-		configPath := filepath.Join(tempDir, "config.yaml")
-		clientConfigPath := filepath.Join(tempDir, "client.json")
+		configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
+		clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 		cfg := &models.Config{
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{
 				{
-					Name: "test-server",
+					Name: testutil.TestServerName,
 					Config: map[string]interface{}{
 						"command": "echo",
 						"args":    []interface{}{"test"},
@@ -167,14 +168,14 @@ func TestToggleClientMCPServer(t *testing.T) {
 			Clients: map[string]*models.Client{
 				"test_client": {
 					ConfigPath: clientConfigPath,
-					Enabled:    []string{"test-server"}, // Start with server enabled
+					Enabled:    []string{testutil.TestServerName}, // Start with server enabled
 				},
 			},
 		}
 
 		service := NewMCPManagerService(cfg, configPath)
 
-		err := service.ToggleClientMCPServer("test_client", "test-server", false)
+		err := service.ToggleClientMCPServer("test_client", testutil.TestServerName, false)
 		if err != nil {
 			t.Fatalf("ToggleClientMCPServer failed: %v", err)
 		}
@@ -189,14 +190,14 @@ func TestToggleClientMCPServer(t *testing.T) {
 	t.Run("Enable already enabled server", func(t *testing.T) {
 		// Create fresh test environment for this sub-test
 		tempDir := t.TempDir()
-		configPath := filepath.Join(tempDir, "config.yaml")
-		clientConfigPath := filepath.Join(tempDir, "client.json")
+		configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
+		clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 		cfg := &models.Config{
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{
 				{
-					Name: "test-server",
+					Name: testutil.TestServerName,
 					Config: map[string]interface{}{
 						"command": "echo",
 						"args":    []interface{}{"test"},
@@ -214,13 +215,13 @@ func TestToggleClientMCPServer(t *testing.T) {
 		service := NewMCPManagerService(cfg, configPath)
 
 		// Enable first time
-		err := service.ToggleClientMCPServer("test_client", "test-server", true)
+		err := service.ToggleClientMCPServer("test_client", testutil.TestServerName, true)
 		if err != nil {
 			t.Fatalf("First enable failed: %v", err)
 		}
 
 		// Enable again (should not duplicate)
-		err = service.ToggleClientMCPServer("test_client", "test-server", true)
+		err = service.ToggleClientMCPServer("test_client", testutil.TestServerName, true)
 		if err != nil {
 			t.Fatalf("Second enable failed: %v", err)
 		}
@@ -234,16 +235,16 @@ func TestToggleClientMCPServer(t *testing.T) {
 
 func TestToggleClientMCPServer_Errors(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	cfg := &models.Config{
 		ServerPort: 6543,
 		MCPServers: []models.MCPServer{
-			{Name: "test-server", Config: map[string]interface{}{"command": "echo"}},
+			{Name: testutil.TestServerName, Config: map[string]interface{}{"command": "echo"}},
 		},
 		Clients: map[string]*models.Client{
 			"test_client": {
-				ConfigPath: "~/.test.json",
+				ConfigPath: testutil.TestClientPath,
 				Enabled:    []string{},
 			},
 		},
@@ -252,7 +253,7 @@ func TestToggleClientMCPServer_Errors(t *testing.T) {
 	service := NewMCPManagerService(cfg, configPath)
 
 	t.Run("Invalid client name", func(t *testing.T) {
-		err := service.ToggleClientMCPServer("nonexistent_client", "test-server", true)
+		err := service.ToggleClientMCPServer("nonexistent_client", testutil.TestServerName, true)
 		if err == nil {
 			t.Error("Expected error for invalid client name")
 		}
@@ -270,7 +271,7 @@ func TestGetServerStatus(t *testing.T) {
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
 			{
-				Name: "test-server",
+				Name: testutil.TestServerName,
 				Config: map[string]interface{}{
 					"command": "echo",
 					"args":    []interface{}{"test"},
@@ -286,7 +287,7 @@ func TestGetServerStatus(t *testing.T) {
 	service := NewMCPManagerService(cfg, "")
 
 	t.Run("Get existing server", func(t *testing.T) {
-		serverConfig, err := service.GetServerStatus("test-server")
+		serverConfig, err := service.GetServerStatus(testutil.TestServerName)
 		if err != nil {
 			t.Fatalf("GetServerStatus failed: %v", err)
 		}
@@ -310,7 +311,7 @@ func TestGetServerStatus(t *testing.T) {
 
 func TestSyncAllClients(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 	client1Path := filepath.Join(tempDir, "client1.json")
 	client2Path := filepath.Join(tempDir, "client2.json")
 
@@ -351,7 +352,7 @@ func TestSyncAllClients(t *testing.T) {
 
 func TestAddServer(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	cfg := &models.Config{
 		ServerPort: 6543,
@@ -360,7 +361,7 @@ func TestAddServer(t *testing.T) {
 		},
 		Clients: map[string]*models.Client{
 			"test_client": {
-				ConfigPath: "~/.test.json",
+				ConfigPath: testutil.TestClientPath,
 				Enabled:    []string{},
 			},
 		},
@@ -376,7 +377,7 @@ func TestAddServer(t *testing.T) {
 
 		err := service.AddServer("new-server", newServerConfig)
 		if err != nil {
-			t.Fatalf("AddServer failed: %v", err)
+			t.Fatalf(testutil.ErrAddServerFailedFmt, err)
 		}
 
 		// Verify server was added
@@ -424,7 +425,7 @@ func TestMCPManagerService_ValidateConfig(t *testing.T) {
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{
 				{
-					Name: "test-server",
+					Name: testutil.TestServerName,
 					Config: map[string]interface{}{
 						"command": "echo",
 						"args":    []interface{}{"test"},
@@ -433,8 +434,8 @@ func TestMCPManagerService_ValidateConfig(t *testing.T) {
 			},
 			Clients: map[string]*models.Client{
 				"test_client": {
-					ConfigPath: "~/.test.json",
-					Enabled:    []string{"test-server"},
+					ConfigPath: testutil.TestClientPath,
+					Enabled:    []string{testutil.TestServerName},
 				},
 			},
 		}
@@ -487,19 +488,19 @@ func TestGetConfig(t *testing.T) {
 
 func TestSaveConfig_Integration(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	// IMPORTANT: Test server order preservation through save/load cycle
 	// This verifies that the order defined in MCPServers slice is maintained
 	cfg := &models.Config{
 		ServerPort: 6543,
 		MCPServers: []models.MCPServer{
-			{Name: "test-server", Config: map[string]interface{}{"command": "echo"}},
+			{Name: testutil.TestServerName, Config: map[string]interface{}{"command": "echo"}},
 		},
 		Clients: map[string]*models.Client{
 			"test_client": {
-				ConfigPath: "~/.test.json",
-				Enabled:    []string{"test-server"},
+				ConfigPath: testutil.TestClientPath,
+				Enabled:    []string{testutil.TestServerName},
 			},
 		},
 	}
@@ -513,7 +514,7 @@ func TestSaveConfig_Integration(t *testing.T) {
 
 	err := service.AddServer("another-server", newServerConfig)
 	if err != nil {
-		t.Fatalf("AddServer failed: %v", err)
+		t.Fatalf(testutil.ErrAddServerFailedFmt, err)
 	}
 
 	// Reload config and verify
@@ -532,7 +533,7 @@ func TestSaveConfig_Integration(t *testing.T) {
 		serverNames[srv.Name] = true
 	}
 
-	if !serverNames["test-server"] {
+	if !serverNames[testutil.TestServerName] {
 		t.Error("test-server not found after reload")
 	}
 	if !serverNames["another-server"] {
@@ -545,7 +546,7 @@ func TestSaveConfig_Integration(t *testing.T) {
 	// TODO: Fix SaveConfig to use yaml.MapSlice or preserve order via Node API
 	//
 	// Expected behavior (currently broken):
-	// if loadedCfg.MCPServers[0].Name != "test-server" {
+	// if loadedCfg.MCPServers[0].Name != testutil.TestServerName {
 	//     t.Errorf("Order not preserved: expected 'test-server' first, got '%s'", loadedCfg.MCPServers[0].Name)
 	// }
 	// if loadedCfg.MCPServers[1].Name != "another-server" {
@@ -556,7 +557,7 @@ func TestSaveConfig_Integration(t *testing.T) {
 func TestOrderPreservation_MultipleServers(t *testing.T) {
 	// This test explicitly validates order preservation through load operations
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	// Create config with specific order: server-c, server-a, server-b
 	yamlContent := `server_port: 6543
@@ -574,7 +575,7 @@ mcpServers:
 
 clients:
   test_client:
-    config_path: "~/.test.json"
+    config_path: testutil.TestClientPath
     enabled:
       - server-a
 `
@@ -607,7 +608,7 @@ clients:
 
 	// Force a save
 	if err := service.AddServer("server-d", map[string]interface{}{"command": "echo"}); err != nil {
-		t.Fatalf("AddServer failed: %v", err)
+		t.Fatalf(testutil.ErrAddServerFailedFmt, err)
 	}
 
 	// Reload and check if order is preserved

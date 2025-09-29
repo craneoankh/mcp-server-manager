@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/vlazic/mcp-server-manager/internal/models"
+	"github.com/vlazic/mcp-server-manager/internal/services/testutil"
 )
 
 // ClientConfigService Tests
@@ -28,7 +29,7 @@ import (
 
 func TestReadClientConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{},
@@ -45,7 +46,7 @@ func TestReadClientConfig(t *testing.T) {
 	t.Run("Read non-existent config", func(t *testing.T) {
 		rawConfig, err := service.ReadClientConfig("test_client")
 		if err != nil {
-			t.Fatalf("ReadClientConfig failed: %v", err)
+			t.Fatalf(testutil.ErrReadClientConfigFailedFmt, err)
 		}
 
 		// Should return empty config with mcpServers section
@@ -63,7 +64,7 @@ func TestReadClientConfig(t *testing.T) {
 		// Create a client config file
 		clientData := map[string]interface{}{
 			"mcpServers": map[string]interface{}{
-				"test-server": map[string]interface{}{
+				testutil.TestServerName: map[string]interface{}{
 					"command": "echo",
 					"args":    []interface{}{"test"},
 				},
@@ -78,7 +79,7 @@ func TestReadClientConfig(t *testing.T) {
 
 		rawConfig, err := service.ReadClientConfig("test_client")
 		if err != nil {
-			t.Fatalf("ReadClientConfig failed: %v", err)
+			t.Fatalf(testutil.ErrReadClientConfigFailedFmt, err)
 		}
 
 		// Verify mcpServers section
@@ -107,7 +108,7 @@ func TestReadClientConfig(t *testing.T) {
 
 func TestWriteClientConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "subdir", "client.json")
+	clientConfigPath := filepath.Join(tempDir, "subdir", testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{},
@@ -123,7 +124,7 @@ func TestWriteClientConfig(t *testing.T) {
 
 	rawConfig := map[string]interface{}{
 		"mcpServers": map[string]interface{}{
-			"test-server": map[string]interface{}{
+			testutil.TestServerName: map[string]interface{}{
 				"command": "npx",
 				"args":    []interface{}{"test"},
 			},
@@ -133,7 +134,7 @@ func TestWriteClientConfig(t *testing.T) {
 
 	// Write config
 	if err := service.WriteClientConfig("test_client", rawConfig); err != nil {
-		t.Fatalf("WriteClientConfig failed: %v", err)
+		t.Fatalf(testutil.ErrWriteClientConfigFailedFmt, err)
 	}
 
 	// Verify file was created
@@ -164,7 +165,7 @@ func TestWriteClientConfig(t *testing.T) {
 
 func TestBackupConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{},
@@ -185,7 +186,7 @@ func TestBackupConfig(t *testing.T) {
 	}
 	data, _ := json.Marshal(initialData)
 	if err := os.WriteFile(clientConfigPath, data, 0644); err != nil {
-		t.Fatalf("Failed to write initial config: %v", err)
+		t.Fatalf(testutil.ErrWriteInitialConfigFailedFmt, err)
 	}
 
 	// Write new config (should create backup)
@@ -195,7 +196,7 @@ func TestBackupConfig(t *testing.T) {
 	}
 
 	if err := service.WriteClientConfig("test_client", newData); err != nil {
-		t.Fatalf("WriteClientConfig failed: %v", err)
+		t.Fatalf(testutil.ErrWriteClientConfigFailedFmt, err)
 	}
 
 	// Check for backup file
@@ -235,12 +236,12 @@ func TestBackupConfig(t *testing.T) {
 
 func TestUpdateMCPServerStatus(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
 			{
-				Name: "test-server",
+				Name: testutil.TestServerName,
 				Config: map[string]interface{}{
 					"command": "npx",
 					"args":    []interface{}{"test"},
@@ -261,18 +262,18 @@ func TestUpdateMCPServerStatus(t *testing.T) {
 	service := NewClientConfigService(cfg)
 
 	t.Run("Enable server", func(t *testing.T) {
-		if err := service.UpdateMCPServerStatus("test_client", "test-server", true); err != nil {
-			t.Fatalf("UpdateMCPServerStatus failed: %v", err)
+		if err := service.UpdateMCPServerStatus("test_client", testutil.TestServerName, true); err != nil {
+			t.Fatalf(testutil.ErrUpdateMCPStatusFailedFmt, err)
 		}
 
 		// Verify server was added to client config
 		rawConfig, err := service.ReadClientConfig("test_client")
 		if err != nil {
-			t.Fatalf("ReadClientConfig failed: %v", err)
+			t.Fatalf(testutil.ErrReadClientConfigFailedFmt, err)
 		}
 
 		mcpServers := rawConfig["mcpServers"].(map[string]interface{})
-		serverConfig, exists := mcpServers["test-server"]
+		serverConfig, exists := mcpServers[testutil.TestServerName]
 		if !exists {
 			t.Fatal("Server was not added to client config")
 		}
@@ -288,18 +289,18 @@ func TestUpdateMCPServerStatus(t *testing.T) {
 	})
 
 	t.Run("Disable server", func(t *testing.T) {
-		if err := service.UpdateMCPServerStatus("test_client", "test-server", false); err != nil {
-			t.Fatalf("UpdateMCPServerStatus failed: %v", err)
+		if err := service.UpdateMCPServerStatus("test_client", testutil.TestServerName, false); err != nil {
+			t.Fatalf(testutil.ErrUpdateMCPStatusFailedFmt, err)
 		}
 
 		// Verify server was removed from client config
 		rawConfig, err := service.ReadClientConfig("test_client")
 		if err != nil {
-			t.Fatalf("ReadClientConfig failed: %v", err)
+			t.Fatalf(testutil.ErrReadClientConfigFailedFmt, err)
 		}
 
 		mcpServers := rawConfig["mcpServers"].(map[string]interface{})
-		if _, exists := mcpServers["test-server"]; exists {
+		if _, exists := mcpServers[testutil.TestServerName]; exists {
 			t.Error("Server was not removed from client config")
 		}
 	})
@@ -307,12 +308,12 @@ func TestUpdateMCPServerStatus(t *testing.T) {
 
 func TestGetMCPServerStatus(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
 			{
-				Name: "test-server",
+				Name: testutil.TestServerName,
 				Config: map[string]interface{}{
 					"command": "echo",
 				},
@@ -321,7 +322,7 @@ func TestGetMCPServerStatus(t *testing.T) {
 		Clients: map[string]*models.Client{
 			"test_client": {
 				ConfigPath: clientConfigPath,
-				Enabled:    []string{"test-server"},
+				Enabled:    []string{testutil.TestServerName},
 			},
 		},
 	}
@@ -329,12 +330,12 @@ func TestGetMCPServerStatus(t *testing.T) {
 	service := NewClientConfigService(cfg)
 
 	// Enable the server
-	service.UpdateMCPServerStatus("test_client", "test-server", true)
+	service.UpdateMCPServerStatus("test_client", testutil.TestServerName, true)
 
 	// Check status
-	enabled, err := service.GetMCPServerStatus("test_client", "test-server")
+	enabled, err := service.GetMCPServerStatus("test_client", testutil.TestServerName)
 	if err != nil {
-		t.Fatalf("GetMCPServerStatus failed: %v", err)
+		t.Fatalf(testutil.ErrGetMCPStatusFailedFmt, err)
 	}
 
 	if !enabled {
@@ -342,11 +343,11 @@ func TestGetMCPServerStatus(t *testing.T) {
 	}
 
 	// Disable and check again
-	service.UpdateMCPServerStatus("test_client", "test-server", false)
+	service.UpdateMCPServerStatus("test_client", testutil.TestServerName, false)
 
-	enabled, err = service.GetMCPServerStatus("test_client", "test-server")
+	enabled, err = service.GetMCPServerStatus("test_client", testutil.TestServerName)
 	if err != nil {
-		t.Fatalf("GetMCPServerStatus failed: %v", err)
+		t.Fatalf(testutil.ErrGetMCPStatusFailedFmt, err)
 	}
 
 	if enabled {
@@ -357,12 +358,12 @@ func TestGetMCPServerStatus(t *testing.T) {
 func TestFieldPreservation(t *testing.T) {
 	// This test verifies the critical fix: ALL fields are preserved when syncing
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
 			{
-				Name: "http-server",
+				Name: testutil.HTTPServerName,
 				Config: map[string]interface{}{
 					"type":        "http",
 					"url":         "https://example.com",
@@ -390,18 +391,18 @@ func TestFieldPreservation(t *testing.T) {
 	service := NewClientConfigService(cfg)
 
 	// Enable server
-	if err := service.UpdateMCPServerStatus("test_client", "http-server", true); err != nil {
-		t.Fatalf("UpdateMCPServerStatus failed: %v", err)
+	if err := service.UpdateMCPServerStatus("test_client", testutil.HTTPServerName, true); err != nil {
+		t.Fatalf(testutil.ErrUpdateMCPStatusFailedFmt, err)
 	}
 
 	// Read client config
 	rawConfig, err := service.ReadClientConfig("test_client")
 	if err != nil {
-		t.Fatalf("ReadClientConfig failed: %v", err)
+		t.Fatalf(testutil.ErrReadClientConfigFailedFmt, err)
 	}
 
 	mcpServers := rawConfig["mcpServers"].(map[string]interface{})
-	serverConfig := mcpServers["http-server"].(map[string]interface{})
+	serverConfig := mcpServers[testutil.HTTPServerName].(map[string]interface{})
 
 	// Verify ALL fields are preserved
 	if serverConfig["type"] != "http" {
@@ -437,7 +438,7 @@ func TestFieldPreservation(t *testing.T) {
 
 func TestReadClientConfig_MalformedJSON(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{},
@@ -476,7 +477,7 @@ func TestWriteClientConfig_ReadOnlyDirectory(t *testing.T) {
 	}
 	defer os.Chmod(readOnlyDir, 0755) // Restore permissions for cleanup
 
-	clientConfigPath := filepath.Join(readOnlyDir, "client.json")
+	clientConfigPath := filepath.Join(readOnlyDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{},
@@ -502,7 +503,7 @@ func TestWriteClientConfig_ReadOnlyDirectory(t *testing.T) {
 
 func TestUpdateMCPServerStatus_NonExistentServer(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
@@ -530,7 +531,7 @@ func TestBackupConfig_CreatesBackup(t *testing.T) {
 	// Note: Multiple rapid writes may create backups with identical timestamps,
 	// so we test backup functionality rather than timestamp uniqueness
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{},
@@ -548,13 +549,13 @@ func TestBackupConfig_CreatesBackup(t *testing.T) {
 	initialData := map[string]interface{}{"mcpServers": map[string]interface{}{}, "version": "1.0"}
 	data, _ := json.Marshal(initialData)
 	if err := os.WriteFile(clientConfigPath, data, 0644); err != nil {
-		t.Fatalf("Failed to write initial config: %v", err)
+		t.Fatalf(testutil.ErrWriteInitialConfigFailedFmt, err)
 	}
 
 	// Overwrite config - should create backup
 	newData := map[string]interface{}{"mcpServers": map[string]interface{}{}, "version": "2.0"}
 	if err := service.WriteClientConfig("test_client", newData); err != nil {
-		t.Fatalf("WriteClientConfig failed: %v", err)
+		t.Fatalf(testutil.ErrWriteClientConfigFailedFmt, err)
 	}
 
 	// Count backup files
@@ -598,11 +599,11 @@ func TestBackupConfig_CreatesBackup(t *testing.T) {
 
 func TestGetMCPServerStatus_EmptyConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
-			{Name: "test-server", Config: map[string]interface{}{"command": "echo"}},
+			{Name: testutil.TestServerName, Config: map[string]interface{}{"command": "echo"}},
 		},
 		Clients: map[string]*models.Client{
 			"test_client": {
@@ -615,9 +616,9 @@ func TestGetMCPServerStatus_EmptyConfig(t *testing.T) {
 	service := NewClientConfigService(cfg)
 
 	// Check status on non-existent config file (should return false, not error)
-	enabled, err := service.GetMCPServerStatus("test_client", "test-server")
+	enabled, err := service.GetMCPServerStatus("test_client", testutil.TestServerName)
 	if err != nil {
-		t.Fatalf("GetMCPServerStatus failed: %v", err)
+		t.Fatalf(testutil.ErrGetMCPStatusFailedFmt, err)
 	}
 
 	if enabled {
@@ -628,11 +629,11 @@ func TestGetMCPServerStatus_EmptyConfig(t *testing.T) {
 func TestUpdateMCPServerStatus_PreserveOtherSettings(t *testing.T) {
 	// Verify that enabling/disabling servers doesn't affect other client settings
 	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "client.json")
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
 		MCPServers: []models.MCPServer{
-			{Name: "test-server", Config: map[string]interface{}{"command": "echo"}},
+			{Name: testutil.TestServerName, Config: map[string]interface{}{"command": "echo"}},
 		},
 		Clients: map[string]*models.Client{
 			"test_client": {
@@ -656,18 +657,18 @@ func TestUpdateMCPServerStatus_PreserveOtherSettings(t *testing.T) {
 	}
 	data, _ := json.MarshalIndent(initialConfig, "", "  ")
 	if err := os.WriteFile(clientConfigPath, data, 0644); err != nil {
-		t.Fatalf("Failed to write initial config: %v", err)
+		t.Fatalf(testutil.ErrWriteInitialConfigFailedFmt, err)
 	}
 
 	// Enable server
-	if err := service.UpdateMCPServerStatus("test_client", "test-server", true); err != nil {
-		t.Fatalf("UpdateMCPServerStatus failed: %v", err)
+	if err := service.UpdateMCPServerStatus("test_client", testutil.TestServerName, true); err != nil {
+		t.Fatalf(testutil.ErrUpdateMCPStatusFailedFmt, err)
 	}
 
 	// Read back and verify other settings are preserved
 	rawConfig, err := service.ReadClientConfig("test_client")
 	if err != nil {
-		t.Fatalf("ReadClientConfig failed: %v", err)
+		t.Fatalf(testutil.ErrReadClientConfigFailedFmt, err)
 	}
 
 	if rawConfig["theme"] != "dark" {

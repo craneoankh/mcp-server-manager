@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/vlazic/mcp-server-manager/internal/models"
+	"github.com/vlazic/mcp-server-manager/internal/services/testutil"
 )
 
 // TestValidateMCPServerConfig provides comprehensive coverage of server configuration validation
@@ -40,7 +41,7 @@ func TestValidateMCPServerConfig(t *testing.T) {
 			serverName: "context7",
 			config: map[string]interface{}{
 				"type": "http",
-				"url":  "https://mcp.context7.com/mcp",
+				"url":  testutil.TestContext7URL,
 			},
 			wantErr: false,
 		},
@@ -48,7 +49,7 @@ func TestValidateMCPServerConfig(t *testing.T) {
 			name:       "Valid HTTP server with httpUrl",
 			serverName: "context7-gemini",
 			config: map[string]interface{}{
-				"httpUrl": "https://mcp.context7.com/mcp",
+				"httpUrl": testutil.TestContext7URL,
 			},
 			wantErr: false,
 		},
@@ -75,7 +76,7 @@ func TestValidateMCPServerConfig(t *testing.T) {
 		},
 		{
 			name:       "Valid HTTP server with http scheme",
-			serverName: "http-server",
+			serverName: testutil.HTTPServerName,
 			config: map[string]interface{}{
 				"url": "http://localhost:8080/mcp",
 			},
@@ -88,14 +89,14 @@ func TestValidateMCPServerConfig(t *testing.T) {
 			serverName:  "",
 			config:      map[string]interface{}{"command": "echo"},
 			wantErr:     true,
-			errContains: "name cannot be empty",
+			errContains: testutil.ErrNameEmpty,
 		},
 		{
 			name:        "Whitespace-only server name",
 			serverName:  "   ",
 			config:      map[string]interface{}{"command": "echo"},
 			wantErr:     true,
-			errContains: "name cannot be empty",
+			errContains: testutil.ErrNameEmpty,
 		},
 
 		// Invalid transport types
@@ -104,62 +105,62 @@ func TestValidateMCPServerConfig(t *testing.T) {
 			serverName:  "invalid",
 			config:      map[string]interface{}{},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:       "Multiple transports - command and url",
-			serverName: "multi-transport",
+			serverName: testutil.MultiTransport,
 			config: map[string]interface{}{
 				"command": "echo",
-				"url":     "https://example.com",
+				"url":     testutil.TestExampleURL,
 			},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:       "Multiple transports - command and httpUrl",
-			serverName: "multi-transport",
+			serverName: testutil.MultiTransport,
 			config: map[string]interface{}{
 				"command": "echo",
-				"httpUrl": "https://example.com",
+				"httpUrl": testutil.TestExampleURL,
 			},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:       "Multiple transports - url and httpUrl",
-			serverName: "multi-transport",
+			serverName: testutil.MultiTransport,
 			config: map[string]interface{}{
-				"url":     "https://example.com",
-				"httpUrl": "https://example.com",
+				"url":     testutil.TestExampleURL,
+				"httpUrl": testutil.TestExampleURL,
 			},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:       "All three transports",
 			serverName: "all-transports",
 			config: map[string]interface{}{
 				"command": "echo",
-				"url":     "https://example.com",
-				"httpUrl": "https://example.com",
+				"url":     testutil.TestExampleURL,
+				"httpUrl": testutil.TestExampleURL,
 			},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:        "Empty command string",
 			serverName:  "empty-cmd",
 			config:      map[string]interface{}{"command": ""},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:        "Whitespace-only command",
 			serverName:  "whitespace-cmd",
 			config:      map[string]interface{}{"command": "   "},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 		{
 			name:        "Command not in PATH",
@@ -210,7 +211,7 @@ func TestValidateMCPServerConfig(t *testing.T) {
 			serverName:  "empty-url",
 			config:      map[string]interface{}{"url": ""},
 			wantErr:     true,
-			errContains: "exactly one transport type",
+			errContains: testutil.ErrExactlyOneTransport,
 		},
 
 		// Invalid timeout
@@ -283,9 +284,7 @@ func TestValidateMCPServerConfig(t *testing.T) {
 				t.Errorf("ValidateMCPServerConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr && tt.errContains != "" && err != nil {
-				if !containsSubstring(err.Error(), tt.errContains) {
-					t.Errorf("Expected error containing '%s', got '%s'", tt.errContains, err.Error())
-				}
+				testutil.AssertErrorContains(t, err, tt.errContains)
 			}
 		})
 	}
@@ -313,16 +312,16 @@ func TestValidateClient(t *testing.T) {
 		{
 			name:        "Empty client name",
 			clientName:  "",
-			client:      &models.Client{ConfigPath: "~/.test.json"},
+			client:      &models.Client{ConfigPath: testutil.TestClientPath},
 			wantErr:     true,
-			errContains: "name cannot be empty",
+			errContains: testutil.ErrNameEmpty,
 		},
 		{
 			name:        "Whitespace-only client name",
 			clientName:  "   ",
-			client:      &models.Client{ConfigPath: "~/.test.json"},
+			client:      &models.Client{ConfigPath: testutil.TestClientPath},
 			wantErr:     true,
-			errContains: "name cannot be empty",
+			errContains: testutil.ErrNameEmpty,
 		},
 		{
 			name:        "Empty config path",
@@ -340,9 +339,7 @@ func TestValidateClient(t *testing.T) {
 				t.Errorf("ValidateClient() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr && tt.errContains != "" && err != nil {
-				if !containsSubstring(err.Error(), tt.errContains) {
-					t.Errorf("Expected error containing '%s', got '%s'", tt.errContains, err.Error())
-				}
+				testutil.AssertErrorContains(t, err, tt.errContains)
 			}
 		})
 	}
@@ -355,10 +352,10 @@ func TestValidateConfig(t *testing.T) {
 		cfg := &models.Config{
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{
-				{Name: "test-server", Config: map[string]interface{}{"command": "echo"}},
+				{Name: testutil.TestServerName, Config: map[string]interface{}{"command": "echo"}},
 			},
 			Clients: map[string]*models.Client{
-				"test_client": {ConfigPath: "~/.test.json", Enabled: []string{"test-server"}},
+				testutil.TestClientName: {ConfigPath: testutil.TestClientPath, Enabled: []string{testutil.TestServerName}},
 			},
 		}
 
@@ -371,23 +368,21 @@ func TestValidateConfig(t *testing.T) {
 		cfg := &models.Config{
 			ServerPort: 0,
 			MCPServers: []models.MCPServer{{Name: "test", Config: map[string]interface{}{"command": "echo"}}},
-			Clients:    map[string]*models.Client{"test": {ConfigPath: "~/.test.json"}},
+			Clients:    map[string]*models.Client{"test": {ConfigPath: testutil.TestClientPath}},
 		}
 
 		err := validator.ValidateConfig(cfg)
 		if err == nil {
 			t.Error("Expected error for port 0")
 		}
-		if !containsSubstring(err.Error(), "invalid server port") {
-			t.Errorf("Expected 'invalid server port' error, got: %v", err)
-		}
+		testutil.AssertErrorContains(t, err, "invalid server port")
 	})
 
 	t.Run("Invalid port - too high", func(t *testing.T) {
 		cfg := &models.Config{
 			ServerPort: 70000,
 			MCPServers: []models.MCPServer{{Name: "test", Config: map[string]interface{}{"command": "echo"}}},
-			Clients:    map[string]*models.Client{"test": {ConfigPath: "~/.test.json"}},
+			Clients:    map[string]*models.Client{"test": {ConfigPath: testutil.TestClientPath}},
 		}
 
 		err := validator.ValidateConfig(cfg)
@@ -400,16 +395,14 @@ func TestValidateConfig(t *testing.T) {
 		cfg := &models.Config{
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{},
-			Clients:    map[string]*models.Client{"test": {ConfigPath: "~/.test.json"}},
+			Clients:    map[string]*models.Client{"test": {ConfigPath: testutil.TestClientPath}},
 		}
 
 		err := validator.ValidateConfig(cfg)
 		if err == nil {
 			t.Error("Expected error for no servers")
 		}
-		if !containsSubstring(err.Error(), "no MCP servers configured") {
-			t.Errorf("Expected 'no MCP servers' error, got: %v", err)
-		}
+		testutil.AssertErrorContains(t, err, "no MCP servers configured")
 	})
 
 	t.Run("No clients configured", func(t *testing.T) {
@@ -423,9 +416,7 @@ func TestValidateConfig(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for no clients")
 		}
-		if !containsSubstring(err.Error(), "no clients configured") {
-			t.Errorf("Expected 'no clients' error, got: %v", err)
-		}
+		testutil.AssertErrorContains(t, err, "no clients configured")
 	})
 
 	t.Run("Client references non-existent server", func(t *testing.T) {
@@ -433,7 +424,7 @@ func TestValidateConfig(t *testing.T) {
 			ServerPort: 6543,
 			MCPServers: []models.MCPServer{{Name: "server1", Config: map[string]interface{}{"command": "echo"}}},
 			Clients: map[string]*models.Client{
-				"test": {ConfigPath: "~/.test.json", Enabled: []string{"nonexistent"}},
+				"test": {ConfigPath: testutil.TestClientPath, Enabled: []string{"nonexistent"}},
 			},
 		}
 
@@ -441,9 +432,7 @@ func TestValidateConfig(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error for non-existent server reference")
 		}
-		if !containsSubstring(err.Error(), "references non-existent server") {
-			t.Errorf("Expected 'references non-existent server' error, got: %v", err)
-		}
+		testutil.AssertErrorContains(t, err, "references non-existent server")
 	})
 
 	t.Run("Invalid server in config", func(t *testing.T) {
@@ -452,7 +441,7 @@ func TestValidateConfig(t *testing.T) {
 			MCPServers: []models.MCPServer{
 				{Name: "", Config: map[string]interface{}{"command": "echo"}}, // Empty name
 			},
-			Clients: map[string]*models.Client{"test": {ConfigPath: "~/.test.json"}},
+			Clients: map[string]*models.Client{"test": {ConfigPath: testutil.TestClientPath}},
 		}
 
 		err := validator.ValidateConfig(cfg)
@@ -484,7 +473,7 @@ func TestValidateClientConfig(t *testing.T) {
 		clientCfg := &models.ClientConfig{
 			MCPServers: map[string]interface{}{
 				"context7": map[string]interface{}{
-					"httpUrl": "https://example.com",
+					"httpUrl": testutil.TestExampleURL,
 				},
 			},
 		}
@@ -537,7 +526,7 @@ func TestValidateClientConfig(t *testing.T) {
 			MCPServers: map[string]interface{}{
 				"multi": map[string]interface{}{
 					"command": "echo",
-					"httpUrl": "https://example.com",
+					"httpUrl": testutil.TestExampleURL,
 				},
 			},
 		}
@@ -578,19 +567,4 @@ func TestIsCommandAvailable(t *testing.T) {
 			t.Error("Expected nonexistent command to be unavailable")
 		}
 	})
-}
-
-// Helper function to check if a string contains a substring
-func containsSubstring(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && stringContains(s, substr)))
-}
-
-func stringContains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

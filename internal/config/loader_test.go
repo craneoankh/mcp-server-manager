@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/vlazic/mcp-server-manager/internal/models"
+	"github.com/vlazic/mcp-server-manager/internal/services/testutil"
 )
 
 // TestLoadConfig_OrderPreservation verifies that server order defined in YAML is preserved
@@ -19,7 +20,7 @@ import (
 func TestLoadConfig_OrderPreservation(t *testing.T) {
 	// Create a temporary config file with specific server order
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	yamlContent := `server_port: 6543
 
@@ -42,13 +43,13 @@ clients:
 `
 
 	if err := os.WriteFile(configPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf(testutil.ErrWriteConfigFailedFmt, err)
 	}
 
 	// Load the config
 	cfg, actualPath, err := LoadConfig(configPath)
 	if err != nil {
-		t.Fatalf("LoadConfig failed: %v", err)
+		t.Fatalf(testutil.ErrLoadConfigFailedFmt, err)
 	}
 
 	if actualPath != configPath {
@@ -70,7 +71,7 @@ clients:
 
 func TestLoadConfig_DefaultPort(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	// Config without server_port specified
 	yamlContent := `mcpServers:
@@ -84,12 +85,12 @@ clients:
 `
 
 	if err := os.WriteFile(configPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf(testutil.ErrWriteConfigFailedFmt, err)
 	}
 
 	cfg, _, err := LoadConfig(configPath)
 	if err != nil {
-		t.Fatalf("LoadConfig failed: %v", err)
+		t.Fatalf(testutil.ErrLoadConfigFailedFmt, err)
 	}
 
 	if cfg.ServerPort != 6543 {
@@ -99,7 +100,7 @@ clients:
 
 func TestLoadConfig_InvalidYAML(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	// Invalid YAML syntax
 	yamlContent := `mcpServers:
@@ -108,7 +109,7 @@ func TestLoadConfig_InvalidYAML(t *testing.T) {
 `
 
 	if err := os.WriteFile(configPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf(testutil.ErrWriteConfigFailedFmt, err)
 	}
 
 	_, _, err := LoadConfig(configPath)
@@ -121,11 +122,11 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 	// Note: LoadConfig actually creates a default config if explicit path doesn't exist
 	// This tests that behavior
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "nonexistent", "config.yaml")
+	configPath := filepath.Join(tempDir, "nonexistent", testutil.TestConfigYAML)
 
 	cfg, actualPath, err := LoadConfig(configPath)
 	if err != nil {
-		t.Fatalf("LoadConfig failed: %v", err)
+		t.Fatalf(testutil.ErrLoadConfigFailedFmt, err)
 	}
 
 	// Should have created default config
@@ -152,7 +153,7 @@ func TestSaveConfig(t *testing.T) {
 		ServerPort: 8080,
 		MCPServers: []models.MCPServer{
 			{
-				Name: "test-server",
+				Name: testutil.TestServerName,
 				Config: map[string]interface{}{
 					"command": "npx",
 					"args":    []interface{}{"test"},
@@ -162,7 +163,7 @@ func TestSaveConfig(t *testing.T) {
 		Clients: map[string]*models.Client{
 			"test_client": {
 				ConfigPath: "~/.test.json",
-				Enabled:    []string{"test-server"},
+				Enabled:    []string{testutil.TestServerName},
 			},
 		},
 	}
@@ -191,7 +192,7 @@ func TestSaveConfig(t *testing.T) {
 		t.Fatalf("Expected 1 server, got %d", len(loadedCfg.MCPServers))
 	}
 
-	if loadedCfg.MCPServers[0].Name != "test-server" {
+	if loadedCfg.MCPServers[0].Name != testutil.TestServerName {
 		t.Errorf("Server name: expected 'test-server', got '%s'", loadedCfg.MCPServers[0].Name)
 	}
 }
@@ -214,8 +215,8 @@ func TestExpandPath(t *testing.T) {
 		},
 		{
 			name:     "Relative path no expansion",
-			path:     "./config.yaml",
-			expected: "./config.yaml",
+			path:     testutil.TestConfigPath,
+			expected: testutil.TestConfigPath,
 		},
 		{
 			name:     "Empty path",
@@ -273,7 +274,7 @@ func TestResolveConfigPath_FindsExisting(t *testing.T) {
 	os.Chdir(tempDir)
 
 	// Create config in current directory
-	configPath := "./config.yaml"
+	configPath := testutil.TestConfigPath
 	if err := os.WriteFile(configPath, []byte("server_port: 6543\nmcpServers: {}\nclients: {}"), 0644); err != nil {
 		t.Fatalf("Failed to create test config: %v", err)
 	}
@@ -294,7 +295,7 @@ func TestResolveConfigPath_FindsExisting(t *testing.T) {
 
 func TestCreateDefaultConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "subdir", "config.yaml")
+	configPath := filepath.Join(tempDir, "subdir", testutil.TestConfigYAML)
 
 	err := createDefaultConfig(configPath)
 	if err != nil {
@@ -330,7 +331,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 
 func TestLoadConfig_EmptyMCPServers(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	yamlContent := `server_port: 6543
 
@@ -343,12 +344,12 @@ clients:
 `
 
 	if err := os.WriteFile(configPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf(testutil.ErrWriteConfigFailedFmt, err)
 	}
 
 	cfg, _, err := LoadConfig(configPath)
 	if err != nil {
-		t.Fatalf("LoadConfig failed: %v", err)
+		t.Fatalf(testutil.ErrLoadConfigFailedFmt, err)
 	}
 
 	if len(cfg.MCPServers) != 0 {
@@ -358,7 +359,7 @@ clients:
 
 func TestLoadConfig_MalformedYAML(t *testing.T) {
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	// Missing colon after key
 	yamlContent := `server_port 6543
@@ -368,7 +369,7 @@ mcpServers:
 `
 
 	if err := os.WriteFile(configPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf(testutil.ErrWriteConfigFailedFmt, err)
 	}
 
 	_, _, err := LoadConfig(configPath)
@@ -380,7 +381,7 @@ mcpServers:
 func TestLoadConfig_InvalidServerConfig(t *testing.T) {
 	// Test that LoadConfig itself doesn't validate (validation happens separately)
 	tempDir := t.TempDir()
-	configPath := filepath.Join(tempDir, "config.yaml")
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
 
 	yamlContent := `server_port: 6543
 
@@ -395,7 +396,7 @@ clients:
 `
 
 	if err := os.WriteFile(configPath, []byte(yamlContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf(testutil.ErrWriteConfigFailedFmt, err)
 	}
 
 	// LoadConfig should succeed (it doesn't validate)
