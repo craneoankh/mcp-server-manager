@@ -12,6 +12,7 @@ Managing Model Context Protocol servers across multiple AI clients (Claude Code,
 - ✅ **All Operating Systems** - Works on Linux, macOS, Windows
 - ✅ **All MCP Clients** - Supports Claude Code, Gemini CLI, and more
 - ✅ **GUI Interface** - Web interface starts with computer, always available on localhost:6543
+- ✅ **Dark/Light Theme** - System theme detection with manual override
 - ✅ **Add Servers via Web UI** - No need to edit configuration files manually
 - ✅ **Real-time Validation** - Instant feedback on configuration errors
 - ✅ **Example Configurations** - Built-in examples for common server types
@@ -104,27 +105,41 @@ Manually edit `~/.config/mcp-server-manager/config.yaml` and restart the service
 ```yaml
 server_port: 6543
 
+# MCP Servers - Map format for easy editing
 mcpServers:
+  # STDIO Transport (command-based local processes)
   filesystem:
     command: "npx"
     args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
+    env:
+      NODE_ENV: "production"
 
-  context7:
+  # HTTP Transport (Claude Code format with type field)
+  context7-claude:
     type: "http"
     url: "https://mcp.context7.com/mcp"
     headers:
       CONTEXT7_API_KEY: "your-api-key"
+      Accept: "application/json, text/event-stream"
 
+  # HTTP Transport (Gemini CLI format with httpUrl)
+  context7-gemini:
+    httpUrl: "https://mcp.context7.com/mcp"
+    headers:
+      CONTEXT7_API_KEY: "your-api-key"
+
+# MCP Clients - Which servers each client uses
 clients:
   claude_code:
     config_path: "~/.claude.json"
     enabled:
       - filesystem
-      - context7
+      - context7-claude
 
   gemini_cli:
     config_path: "~/.gemini/settings.json"
     enabled:
+      - context7-gemini
       - filesystem
 ```
 

@@ -10,7 +10,9 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 - Single binary with embedded assets (no external dependencies)
 - Cross-platform support (Linux, macOS, Windows)
 - Real-time web interface with HTMX
+- Dark/light theme system with manual override and system preference detection
 - Automatic client config synchronization
+- Server order preservation in UI and configuration
 - Systemd integration for auto-start
 
 ## Development Guidelines
@@ -76,12 +78,12 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
 ├── internal/
 │   ├── assets/                  # Embedded web assets (templates, CSS, JS)
 │   │   └── web/                 # Mirror of web/ directory for embedding
-│   ├── config/loader.go         # YAML config loading/saving with validation
+│   ├── config/loader.go         # YAML config loading/saving with order preservation
 │   ├── handlers/                # HTTP request handlers
 │   │   ├── api.go              # REST API endpoints for programmatic access
 │   │   ├── web.go              # HTMX endpoints returning HTML fragments
 │   │   └── config_viewer.go    # Configuration display handlers
-│   ├── models/config.go         # Data structures for app and client configs
+│   ├── models/config.go         # Data structures: MCPServer (ordered slice), Client
 │   └── services/                # Core business logic
 │       ├── mcp_manager.go      # Central orchestration service
 │       ├── client_config.go    # Client JSON config manipulation
@@ -97,8 +99,9 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
 
 **MCPManagerService** (`internal/services/mcp_manager.go`):
 - Central orchestrator coordinating between central config and client configs
-- Handles per-client server toggling and sync operations
+- Handles per-client server toggling (no global toggle - simplified in v2.0)
 - Manages the two-layer configuration model (central YAML → client JSONs)
+- Preserves server order from YAML configuration
 
 **ClientConfigService** (`internal/services/client_config.go`):
 - Reads/writes individual AI client configuration files
@@ -116,14 +119,21 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
 The application operates on a **two-layer configuration model**:
 
 1. **Central Configuration** (`configs/config.yaml`):
+   - Map-based YAML format for easy editing (mcpServers as key-value pairs)
    - Defines all available MCP servers with commands, args, environment variables
    - Specifies which clients exist and their config file paths
-   - Controls per-client server enable/disable states
+   - Controls per-client server enable/disable states (array of enabled server names)
+   - Server order preserved using yaml.v3 Node parsing (v2.0+)
 
 2. **Client Configurations** (e.g., `~/.claude.json`, `~/.gemini/settings.json`):
    - Individual AI client settings that get automatically updated
    - Preserves client-specific settings (themes, auth) while updating MCP sections
    - Supports different formats: Claude (command-based) vs Gemini (command + HTTP)
+
+**Internal Representation (v2.0+)**:
+- YAML map is parsed and converted to ordered slice: `[]MCPServer{Name, Config}`
+- Preserves order from YAML file using yaml.v3 Node traversal
+- UI displays servers in the same order as defined in config file
 
 ### Web Interface & HTMX Patterns
 
@@ -145,6 +155,7 @@ The application operates on a **two-layer configuration model**:
 - Real-time validation for MCP client configuration format
 - Example configurations for STDIO, HTTP, SSE, and Context7 servers
 - Client-side validation before submission
+- Form positioned below button with slide animation
 
 **Interactive Configuration Examples**:
 - Pre-built examples for common server types
@@ -155,6 +166,13 @@ The application operates on a **two-layer configuration model**:
 - YAML config displayed in original format (not JSON conversion)
 - Real-time syntax highlighting with Prism.js
 - Auto-refresh after configuration changes
+
+**Dark/Light Theme System** (v1.3.0+):
+- System theme detection as default
+- Manual theme override (light/dark/system)
+- Theme preference persisted in localStorage
+- Immediate theme application to prevent flash on page load
+- CSS custom properties for consistent theming across all components
 
 ### Embedded Assets System
 
@@ -174,7 +192,8 @@ The application operates on a **two-layer configuration model**:
 **Heterogeneous Config Formats**:
 - Claude: `mcpServers` with command/args structure
 - Gemini: `mcpServers` supporting both command-based AND HTTP servers with headers
-- Solution: `ClientConfig.MCPServers` uses `map[string]interface{}` for flexibility
+- Solution: `MCPServer.Config` uses `map[string]interface{}` for flexibility (v2.0+)
+- All fields from central config passed through to clients (no filtering)
 
 **Synchronization Process**:
 1. Read current client config (create empty if missing)
@@ -183,13 +202,32 @@ The application operates on a **two-layer configuration model**:
 4. Create automatic `.backup.TIMESTAMP` files before writing
 5. Validate structure before writing to prevent corruption
 
+**Data Model (v2.0+)**:
+```go
+type MCPServer struct {
+    Name   string                 // Server identifier
+    Config map[string]interface{} // Flexible config (command, args, env, type, url, etc.)
+}
+
+type Client struct {
+    ConfigPath string   // Path to client JSON config
+    Enabled    []string // List of enabled server names
+}
+```
+
 ### Key Technical Constraints & Solutions
 
 **Development Environment**:
-- Server runs on port 6543 (not 6543)
+- Server runs on port 6543
 - Development server runs in background - never run `make run` during development
 - Changes to templates/static files require `make sync-assets` or are auto-synced during build
 - Use `make test-release` to test complete .deb package installation locally
+
+**Code Quality & Simplification**:
+- v2.0 refactoring removed 880 lines of code while adding functionality
+- Simplified architecture: removed global enable/disable complexity
+- Better order preservation with yaml.v3 Node parsing
+- More robust client config handling preserves all fields
 
 **Git Workflow**:
 - Use semantic commit messages: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`
