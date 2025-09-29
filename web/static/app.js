@@ -301,7 +301,7 @@ const ThemeManager = {
      * @returns {string} - 'light' or 'dark'
      */
     getSystemTheme() {
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        return globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches
             ? 'dark'
             : 'light';
     },
@@ -315,10 +315,10 @@ const ThemeManager = {
 
         if (theme === 'system') {
             // Remove data-theme attribute to use CSS media query
-            root.removeAttribute('data-theme');
+            delete root.dataset.theme;
         } else {
             // Set explicit theme
-            root.setAttribute('data-theme', theme);
+            root.dataset.theme = theme;
         }
 
         MCPManager.state.currentTheme = theme;
@@ -372,8 +372,8 @@ const ThemeManager = {
         setTimeout(setupUI, 100);
 
         // Listen for system theme changes
-        if (window.matchMedia) {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        if (globalThis.matchMedia) {
+            const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)');
             mediaQuery.addEventListener('change', () => {
                 // Only update if currently using system theme
                 if (MCPManager.state.currentTheme === 'system') {

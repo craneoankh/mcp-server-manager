@@ -11,7 +11,7 @@
 <div id="error-{{.client}}-{{.serverName}}" class="hidden mb-2">
 </div>
 
-<label class="inline-flex items-center">
+<label class="inline-flex items-center" aria-label="Toggle {{.serverName}} for {{.client}}">
     <input type="checkbox"
            class="form-checkbox h-5 w-5 text-green-600"
            {{if $enabled}}checked{{end}}
@@ -20,5 +20,6 @@
            hx-target="#client-{{.client}}-server-{{.serverName}}"
            hx-swap="innerHTML"
            hx-trigger="click"
-           _="on htmx:afterRequest trigger configChanged on body">
+           _="on htmx:afterRequest trigger configChanged on body"
+           aria-label="Enable or disable {{.serverName}} for {{.client}}">
 </label>

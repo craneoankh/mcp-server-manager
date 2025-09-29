@@ -24,9 +24,9 @@
             const applyTheme = (theme) => {
                 const root = document.documentElement;
                 if (theme === 'system') {
-                    root.removeAttribute('data-theme');
+                    delete root.dataset.theme;
                 } else {
-                    root.setAttribute('data-theme', theme);
+                    root.dataset.theme = theme;
                 }
             };
 
@@ -69,7 +69,7 @@
         <!-- How It Works Section (collapsed by default) -->
         <div class="rounded-lg p-6 mb-6" style="background-color: var(--bg-secondary); box-shadow: var(--shadow);">
             <details class="border rounded" style="border-color: var(--border-primary);">
-                <summary class="px-4 py-3 cursor-pointer font-medium text-lg" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                <summary class="px-4 py-3 cursor-pointer font-medium text-lg" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'" onfocus="this.style.backgroundColor='var(--bg-accent)'" onblur="this.style.backgroundColor='var(--bg-tertiary)'">
                     💡 How It Works
                 </summary>
                 <div class="p-4 prose max-w-none text-sm" style="color: var(--text-secondary);">
@@ -248,7 +248,7 @@ clients:
 
             <!-- App Config -->
             <details class="mb-4 border rounded" style="border-color: var(--border-primary);">
-                <summary class="px-4 py-3 cursor-pointer font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                <summary class="px-4 py-3 cursor-pointer font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'" onfocus="this.style.backgroundColor='var(--bg-accent)'" onblur="this.style.backgroundColor='var(--bg-tertiary)'">
                     📄 Application configuration
                 </summary>
                 <div class="p-4"
@@ -264,7 +264,7 @@ clients:
             <!-- Client Configs -->
             {{range .clients}}
             <details class="mb-4 border rounded" style="border-color: var(--border-primary);">
-                <summary class="px-4 py-3 cursor-pointer font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                <summary class="px-4 py-3 cursor-pointer font-medium" style="background-color: var(--bg-tertiary); color: var(--text-primary);" onmouseover="this.style.backgroundColor='var(--bg-accent)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'" onfocus="this.style.backgroundColor='var(--bg-accent)'" onblur="this.style.backgroundColor='var(--bg-tertiary)'">
                     🔧 {{.Name}} configuration ({{.ConfigPath}})
                 </summary>
                 <div class="p-4"

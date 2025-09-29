@@ -19,42 +19,63 @@ const (
 
 // detectTransportType identifies the transport type from server config
 func detectTransportType(serverConfig map[string]interface{}) (TransportType, string, error) {
-	var transportType TransportType
-	var transportValue string
-	count := 0
+	transports := []struct {
+		key   string
+		tType TransportType
+	}{
+		{"command", TransportCommand},
+		{"url", TransportURL},
+		{"httpUrl", TransportHTTP},
+	}
 
-	if command, exists := serverConfig["command"]; exists && command != nil {
-		if cmdStr, ok := command.(string); ok && strings.TrimSpace(cmdStr) != "" {
-			transportType = TransportCommand
-			transportValue = cmdStr
-			count++
+	var found []struct {
+		tType TransportType
+		value string
+	}
+
+	for _, t := range transports {
+		if value := extractTransportValue(serverConfig, t.key); value != "" {
+			found = append(found, struct {
+				tType TransportType
+				value string
+			}{t.tType, value})
 		}
 	}
 
-	if urlVal, exists := serverConfig["url"]; exists && urlVal != nil {
-		if urlStr, ok := urlVal.(string); ok && strings.TrimSpace(urlStr) != "" {
-			transportType = TransportURL
-			transportValue = urlStr
-			count++
-		}
+	return validateTransportCount(found)
+}
+
+// extractTransportValue extracts and validates a transport value from config
+func extractTransportValue(config map[string]interface{}, key string) string {
+	value, exists := config[key]
+	if !exists || value == nil {
+		return ""
 	}
 
-	if httpUrl, exists := serverConfig["httpUrl"]; exists && httpUrl != nil {
-		if httpUrlStr, ok := httpUrl.(string); ok && strings.TrimSpace(httpUrlStr) != "" {
-			transportType = TransportHTTP
-			transportValue = httpUrlStr
-			count++
-		}
+	strValue, ok := value.(string)
+	if !ok {
+		return ""
 	}
+
+	return strings.TrimSpace(strValue)
+}
+
+// validateTransportCount ensures exactly one transport type is present
+func validateTransportCount(found []struct {
+	tType TransportType
+	value string
+}) (TransportType, string, error) {
+	count := len(found)
 
 	if count == 0 {
 		return TransportNone, "", fmt.Errorf("server must have exactly one transport type: command, url, or httpUrl")
 	}
+
 	if count > 1 {
 		return TransportNone, "", fmt.Errorf("server must have exactly one transport type, found %d", count)
 	}
 
-	return transportType, transportValue, nil
+	return found[0].tType, found[0].value, nil
 }
 
 // validateTransportValue validates the specific transport value based on type
