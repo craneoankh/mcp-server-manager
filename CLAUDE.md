@@ -99,6 +99,31 @@ We've been busy little bees! 🐝 This release brings you a shiny new dark mode 
 - SonarQube automatically picks up coverage data from the repository
 - Workflow: Run `make test-coverage` before committing changes to keep coverage current
 
+### SonarQube Quick Reference
+
+**Project Information** (use these directly to skip search):
+- **Project Key**: `vlazic_mcp-server-manager`
+- **Project Name**: `mcp-server-manager`
+- **Organization**: `vlazic`
+
+**Efficient MCP Tool Usage**:
+```
+# Get quality gate status directly (no search needed)
+get_project_quality_gate_status(projectKey: "vlazic_mcp-server-manager")
+
+# Search issues in this project
+search_sonar_issues_in_projects(projects: ["vlazic_mcp-server-manager"], ps: 50)
+
+# Get specific metrics
+get_component_measures(component: "vlazic_mcp-server-manager", metricKeys: [...])
+```
+
+**Performance Tips**:
+- Skip `search_my_sonarqube_projects` - use project key directly
+- Large issue responses (~10k tokens for 100 issues) - use pagination (`ps: 50`) or filter by severity
+- Check quality gate first to identify specific failing conditions
+- Use `get_component_measures` for targeted metric analysis instead of full issue list
+
 ## Detailed Architecture
 
 ### File Structure & Key Components
