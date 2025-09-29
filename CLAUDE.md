@@ -50,7 +50,7 @@ MCP Server Manager is a Go web application that centralizes management of Model 
 ### Release Message Guidelines
 
 When asked to create a release, Claude should:
-1. Analyze commits since the last git tag to understand changes
+1. Analyze commits since the last git tag to understand changes - **IMPORTANT**: Use `git log --format="%H%n%s%n%b%n---"` to read full commit bodies (not just one-line summaries)
 2. Create a fun, engaging release summary in the style of YNAB release notes - casual, slightly humorous, user-focused
 3. Summarize features/improvements in a non-technical way that users would understand and appreciate
 4. Format the message with a **subject line**, **blank line**, and **body** for proper GoReleaser parsing
