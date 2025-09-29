@@ -6,11 +6,17 @@ type Client struct {
 	Enabled    []string `yaml:"enabled,omitempty" json:"enabled,omitempty"` // List of enabled server names
 }
 
+// MCPServer represents a single MCP server with its name and configuration
+type MCPServer struct {
+	Name   string                 `yaml:"name" json:"name"`
+	Config map[string]interface{} `yaml:"config,inline" json:"config,inline"`
+}
+
 // Config is the main application configuration
 type Config struct {
-	MCPServers map[string]map[string]interface{} `yaml:"mcpServers" json:"mcpServers"` // Server name -> config map
-	Clients    map[string]*Client                `yaml:"clients" json:"clients"`       // Client name -> client config
-	ServerPort int                               `yaml:"server_port" json:"server_port"`
+	MCPServers []MCPServer        `yaml:"mcpServers" json:"mcpServers"` // Ordered list of MCP servers
+	Clients    map[string]*Client `yaml:"clients" json:"clients"`       // Client name -> client config
+	ServerPort int                `yaml:"server_port" json:"server_port"`
 }
 
 type ClientConfig struct {

@@ -29,10 +29,16 @@ func (v *ValidatorService) ValidateConfig(config *models.Config) error {
 	}
 
 	// Validate each MCP server
-	for serverName, serverConfig := range config.MCPServers {
-		if err := v.ValidateMCPServerConfig(serverName, serverConfig); err != nil {
-			return fmt.Errorf("invalid MCP server '%s': %w", serverName, err)
+	for _, server := range config.MCPServers {
+		if err := v.ValidateMCPServerConfig(server.Name, server.Config); err != nil {
+			return fmt.Errorf("invalid MCP server '%s': %w", server.Name, err)
 		}
+	}
+
+	// Build server name set for validation
+	serverNames := make(map[string]bool)
+	for _, server := range config.MCPServers {
+		serverNames[server.Name] = true
 	}
 
 	// Validate each client
@@ -43,7 +49,7 @@ func (v *ValidatorService) ValidateConfig(config *models.Config) error {
 
 		// Validate that enabled servers exist
 		for _, serverName := range client.Enabled {
-			if _, exists := config.MCPServers[serverName]; !exists {
+			if !serverNames[serverName] {
 				return fmt.Errorf("client '%s' references non-existent server '%s'", clientName, serverName)
 			}
 		}

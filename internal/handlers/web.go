@@ -21,10 +21,10 @@ func NewWebHandler(mcpManager *services.MCPManagerService) *WebHandler {
 }
 
 func (h *WebHandler) Index(c *gin.Context) {
-	serversMap := h.mcpManager.GetMCPServers()
+	servers := h.mcpManager.GetMCPServers()
 	clientsMap := h.mcpManager.GetClients()
 
-	// Convert maps to slices for template iteration with proper structure
+	// Convert to view structures
 	type ServerView struct {
 		Name   string
 		Config map[string]interface{}
@@ -36,11 +36,12 @@ func (h *WebHandler) Index(c *gin.Context) {
 		Enabled    []string
 	}
 
-	servers := make([]ServerView, 0, len(serversMap))
-	for name, config := range serversMap {
-		servers = append(servers, ServerView{
-			Name:   name,
-			Config: config,
+	// Servers already ordered from config
+	serverViews := make([]ServerView, 0, len(servers))
+	for _, server := range servers {
+		serverViews = append(serverViews, ServerView{
+			Name:   server.Name,
+			Config: server.Config,
 		})
 	}
 
@@ -54,7 +55,7 @@ func (h *WebHandler) Index(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"servers": servers,
+		"servers": serverViews,
 		"clients": clients,
 	})
 }
@@ -96,10 +97,10 @@ func (h *WebHandler) ToggleClientServerHTMX(c *gin.Context) {
 
 	// Success - return normal toggle with hidden error container
 	c.HTML(http.StatusOK, "client_toggle.html", gin.H{
-		"serverName":   serverName,
-		"serverConfig": serverConfig,
-		"client":       clientName,
-		"enabled":      contains(client.Enabled, serverName),
+		"serverName":    serverName,
+		"serverConfig":  serverConfig,
+		"client":        clientName,
+		"clientEnabled": client.Enabled,
 	})
 }
 

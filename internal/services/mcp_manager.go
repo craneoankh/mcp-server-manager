@@ -23,8 +23,8 @@ func NewMCPManagerService(cfg *models.Config, configPath string) *MCPManagerServ
 	}
 }
 
-// GetMCPServers returns the server map
-func (s *MCPManagerService) GetMCPServers() map[string]map[string]interface{} {
+// GetMCPServers returns the ordered server slice
+func (s *MCPManagerService) GetMCPServers() []models.MCPServer {
 	return s.config.MCPServers
 }
 
@@ -42,7 +42,14 @@ func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string,
 	}
 
 	// Check if server exists
-	if _, exists := s.config.MCPServers[serverName]; !exists {
+	serverExists := false
+	for _, srv := range s.config.MCPServers {
+		if srv.Name == serverName {
+			serverExists = true
+			break
+		}
+	}
+	if !serverExists {
 		return fmt.Errorf("MCP server '%s' not found", serverName)
 	}
 
@@ -86,11 +93,12 @@ func (s *MCPManagerService) ToggleClientMCPServer(clientName, serverName string,
 
 // GetServerStatus returns server configuration by name
 func (s *MCPManagerService) GetServerStatus(serverName string) (map[string]interface{}, error) {
-	serverConfig, exists := s.config.MCPServers[serverName]
-	if !exists {
-		return nil, fmt.Errorf("MCP server '%s' not found", serverName)
+	for _, srv := range s.config.MCPServers {
+		if srv.Name == serverName {
+			return srv.Config, nil
+		}
 	}
-	return serverConfig, nil
+	return nil, fmt.Errorf("MCP server '%s' not found", serverName)
 }
 
 // SyncAllClients synchronizes all client configurations based on enabled lists
@@ -103,9 +111,9 @@ func (s *MCPManagerService) SyncAllClients() error {
 		}
 
 		// Sync each server in the config
-		for serverName := range s.config.MCPServers {
-			enabled := enabledSet[serverName]
-			if err := s.clientConfigService.UpdateMCPServerStatus(clientName, serverName, enabled); err != nil {
+		for _, srv := range s.config.MCPServers {
+			enabled := enabledSet[srv.Name]
+			if err := s.clientConfigService.UpdateMCPServerStatus(clientName, srv.Name, enabled); err != nil {
 				return fmt.Errorf("failed to sync client '%s': %w", clientName, err)
 			}
 		}
@@ -129,17 +137,17 @@ func (s *MCPManagerService) AddServer(serverName string, serverConfig map[string
 	}
 
 	// Check if server with this name already exists
-	if _, exists := s.config.MCPServers[serverName]; exists {
-		return fmt.Errorf("server with name '%s' already exists", serverName)
+	for _, srv := range s.config.MCPServers {
+		if srv.Name == serverName {
+			return fmt.Errorf("server with name '%s' already exists", serverName)
+		}
 	}
 
-	// Initialize servers map if nil
-	if s.config.MCPServers == nil {
-		s.config.MCPServers = make(map[string]map[string]interface{})
-	}
-
-	// Add the server to the config
-	s.config.MCPServers[serverName] = serverConfig
+	// Add the server to the config (appends to end)
+	s.config.MCPServers = append(s.config.MCPServers, models.MCPServer{
+		Name:   serverName,
+		Config: serverConfig,
+	})
 
 	// Save the config
 	return s.saveConfig()

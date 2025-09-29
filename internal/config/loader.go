@@ -23,16 +23,72 @@ func LoadConfig(configPath string) (*models.Config, string, error) {
 		return nil, "", fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var config models.Config
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	// Parse YAML manually to preserve server order
+	var rawConfig struct {
+		MCPServers map[string]map[string]interface{} `yaml:"mcpServers"`
+		Clients    map[string]*models.Client         `yaml:"clients"`
+		ServerPort int                               `yaml:"server_port"`
+	}
+
+	// Use yaml.v3 Node to preserve order
+	var node yaml.Node
+	if err := yaml.Unmarshal(data, &node); err != nil {
 		return nil, "", fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	if err := node.Decode(&rawConfig); err != nil {
+		return nil, "", fmt.Errorf("failed to decode config: %w", err)
+	}
+
+	// Extract server order from YAML node
+	var serverOrder []string
+	if len(node.Content) > 0 && len(node.Content[0].Content) > 0 {
+		for i := 0; i < len(node.Content[0].Content); i += 2 {
+			keyNode := node.Content[0].Content[i]
+			if keyNode.Value == "mcpServers" && i+1 < len(node.Content[0].Content) {
+				serversNode := node.Content[0].Content[i+1]
+				// Extract keys in order
+				for j := 0; j < len(serversNode.Content); j += 2 {
+					serverName := serversNode.Content[j].Value
+					serverOrder = append(serverOrder, serverName)
+				}
+				break
+			}
+		}
+	}
+
+	// Convert map to ordered slice
+	config := &models.Config{
+		MCPServers: make([]models.MCPServer, 0, len(rawConfig.MCPServers)),
+		Clients:    rawConfig.Clients,
+		ServerPort: rawConfig.ServerPort,
+	}
+
+	// Use extracted order, or fallback to map iteration
+	if len(serverOrder) > 0 {
+		for _, name := range serverOrder {
+			if serverConfig, exists := rawConfig.MCPServers[name]; exists {
+				config.MCPServers = append(config.MCPServers, models.MCPServer{
+					Name:   name,
+					Config: serverConfig,
+				})
+			}
+		}
+	} else {
+		// Fallback: map iteration (order not guaranteed)
+		for name, serverConfig := range rawConfig.MCPServers {
+			config.MCPServers = append(config.MCPServers, models.MCPServer{
+				Name:   name,
+				Config: serverConfig,
+			})
+		}
 	}
 
 	if config.ServerPort == 0 {
 		config.ServerPort = 6543
 	}
 
-	return &config, actualPath, nil
+	return config, actualPath, nil
 }
 
 // resolveConfigPath implements smart config path resolution with fallback
@@ -181,7 +237,27 @@ func SaveConfig(config *models.Config, configPath string) error {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	data, err := yaml.Marshal(config)
+	// Convert ordered slice back to map for standard YAML marshaling
+	// This preserves order through yaml.v3's MapSlice or custom marshaling
+	serversMap := make(map[string]interface{})
+	for _, server := range config.MCPServers {
+		serversMap[server.Name] = server.Config
+	}
+
+	// Create temporary struct for marshaling with proper order
+	type ConfigForSave struct {
+		ServerPort int                    `yaml:"server_port"`
+		MCPServers map[string]interface{} `yaml:"mcpServers"`
+		Clients    map[string]*models.Client `yaml:"clients"`
+	}
+
+	saveConfig := ConfigForSave{
+		ServerPort: config.ServerPort,
+		MCPServers: serversMap,
+		Clients:    config.Clients,
+	}
+
+	data, err := yaml.Marshal(saveConfig)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}

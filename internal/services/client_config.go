@@ -97,8 +97,16 @@ func (s *ClientConfigService) UpdateMCPServerStatus(clientName, serverName strin
 
 	if enabled {
 		// Get server config from app config
-		serverConfig, exists := s.config.MCPServers[serverName]
-		if !exists {
+		var serverConfig map[string]interface{}
+		found := false
+		for _, srv := range s.config.MCPServers {
+			if srv.Name == serverName {
+				serverConfig = srv.Config
+				found = true
+				break
+			}
+		}
+		if !found {
 			return fmt.Errorf("MCP server '%s' not found in app config", serverName)
 		}
 
