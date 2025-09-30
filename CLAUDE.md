@@ -85,28 +85,32 @@ Body content..."
 
 ### Test Coverage
 - Project maintains **64.8% overall test coverage**
-- Coverage tracking configured for SonarQube integration
-- Run `make test-coverage` to generate coverage reports
-- Coverage file: `coverage.out` (committed to git for SonarQube)
+- Coverage tracking configured for SonarQube CI-based analysis
+- Run `make test-coverage` to generate coverage reports locally
+- Coverage file: `coverage.out` (auto-generated in CI, not committed)
 - View coverage: `go tool cover -func=coverage.out` or `go tool cover -html=coverage.out`
-- **Important**: Always run `make test-coverage` before committing to keep coverage data current
 
 ### SonarQube Integration
-- Configuration: `sonar-project.properties`
-- Coverage reports automatically included in SonarQube analysis
-- Strategic exclusions configured:
+- **Analysis Type**: CI-based analysis via GitHub Actions (`.github/workflows/sonarqube.yml`)
+- **Configuration**: `sonar-project.properties`
+- **Coverage Reporting**: Automatic via GitHub Actions workflow
+  - Tests run with coverage: `go test -coverprofile=coverage.out ./...`
+  - Coverage data sent to SonarQube Cloud on every push/PR
+- **Strategic exclusions configured**:
   - Test file naming conventions (Go uses underscores)
   - Intentional code duplication (web/ ↔ internal/assets/web/)
   - Test-specific cognitive complexity rules
   - Graceful error handling patterns
-- Quality Gate: **PASSED** ✓
-- Current metrics: 6 bugs, 63 code smells, 0 vulnerabilities, A maintainability rating
+- **Quality Gate**: PASSED ✓
+- **Setup Requirements**:
+  - `SONAR_TOKEN` secret in GitHub (set via: `gh secret set SONAR_TOKEN`)
+  - Automatic analysis disabled in SonarQube Cloud UI
 
-**GitHub Integration**:
-- Connected via SonarQube GitHub App (automatic analysis on push/PR)
-- Coverage file (`coverage.out`) is committed to git for SonarQube to analyze
-- SonarQube automatically picks up coverage data from the repository
-- Workflow: Run `make test-coverage` before committing changes to keep coverage current
+**Why CI-based Analysis?**:
+- SonarQube automatic analysis (GitHub App) doesn't support coverage reporting
+- CI-based analysis generates coverage.out during the workflow run
+- Coverage data is sent directly to SonarQube from the CI environment
+- GitHub App still provides PR decoration and other features
 
 ### SonarQube Quick Reference
 

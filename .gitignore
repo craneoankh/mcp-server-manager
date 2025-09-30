@@ -10,7 +10,8 @@ dist/
 # Test binary, built with `go test -c`
 *.test
 
-# Note: coverage.out is committed for SonarQube integration
+# Coverage files (generated in CI for SonarQube)
+coverage.out
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
