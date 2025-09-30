@@ -99,33 +99,39 @@ func TestGetClients(t *testing.T) {
 	}
 }
 
+// setupToggleTest creates a test environment for toggle tests
+func setupToggleTest(t *testing.T, enabledServers []string) (*MCPManagerService, *models.Config, string) {
+	t.Helper()
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
+	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
+
+	cfg := &models.Config{
+		ServerPort: 6543,
+		MCPServers: []models.MCPServer{
+			{
+				Name: testutil.TestServerName,
+				Config: map[string]interface{}{
+					"command": "echo",
+					"args":    []interface{}{"test"},
+				},
+			},
+		},
+		Clients: map[string]*models.Client{
+			"test_client": {
+				ConfigPath: clientConfigPath,
+				Enabled:    enabledServers,
+			},
+		},
+	}
+
+	service := NewMCPManagerService(cfg, configPath)
+	return service, cfg, configPath
+}
+
 func TestToggleClientMCPServer(t *testing.T) {
 	t.Run("Enable server", func(t *testing.T) {
-		// Create fresh test environment for this sub-test
-		tempDir := t.TempDir()
-		configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
-		clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
-
-		cfg := &models.Config{
-			ServerPort: 6543,
-			MCPServers: []models.MCPServer{
-				{
-					Name: testutil.TestServerName,
-					Config: map[string]interface{}{
-						"command": "echo",
-						"args":    []interface{}{"test"},
-					},
-				},
-			},
-			Clients: map[string]*models.Client{
-				"test_client": {
-					ConfigPath: clientConfigPath,
-					Enabled:    []string{},
-				},
-			},
-		}
-
-		service := NewMCPManagerService(cfg, configPath)
+		service, cfg, configPath := setupToggleTest(t, []string{})
 
 		err := service.ToggleClientMCPServer("test_client", testutil.TestServerName, true)
 		if err != nil {
@@ -149,31 +155,7 @@ func TestToggleClientMCPServer(t *testing.T) {
 	})
 
 	t.Run("Disable server", func(t *testing.T) {
-		// Create fresh test environment for this sub-test
-		tempDir := t.TempDir()
-		configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
-		clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
-
-		cfg := &models.Config{
-			ServerPort: 6543,
-			MCPServers: []models.MCPServer{
-				{
-					Name: testutil.TestServerName,
-					Config: map[string]interface{}{
-						"command": "echo",
-						"args":    []interface{}{"test"},
-					},
-				},
-			},
-			Clients: map[string]*models.Client{
-				"test_client": {
-					ConfigPath: clientConfigPath,
-					Enabled:    []string{testutil.TestServerName}, // Start with server enabled
-				},
-			},
-		}
-
-		service := NewMCPManagerService(cfg, configPath)
+		service, cfg, _ := setupToggleTest(t, []string{testutil.TestServerName})
 
 		err := service.ToggleClientMCPServer("test_client", testutil.TestServerName, false)
 		if err != nil {
@@ -188,31 +170,7 @@ func TestToggleClientMCPServer(t *testing.T) {
 	})
 
 	t.Run("Enable already enabled server", func(t *testing.T) {
-		// Create fresh test environment for this sub-test
-		tempDir := t.TempDir()
-		configPath := filepath.Join(tempDir, testutil.TestConfigYAML)
-		clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
-
-		cfg := &models.Config{
-			ServerPort: 6543,
-			MCPServers: []models.MCPServer{
-				{
-					Name: testutil.TestServerName,
-					Config: map[string]interface{}{
-						"command": "echo",
-						"args":    []interface{}{"test"},
-					},
-				},
-			},
-			Clients: map[string]*models.Client{
-				"test_client": {
-					ConfigPath: clientConfigPath,
-					Enabled:    []string{},
-				},
-			},
-		}
-
-		service := NewMCPManagerService(cfg, configPath)
+		service, cfg, _ := setupToggleTest(t, []string{})
 
 		// Enable first time
 		err := service.ToggleClientMCPServer("test_client", testutil.TestServerName, true)
