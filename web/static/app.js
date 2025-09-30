@@ -475,7 +475,7 @@ const FormHandler = {
 
             // Trigger config refresh and reload
             document.body.dispatchEvent(new CustomEvent('configChanged'));
-            window.location.reload();
+            globalThis.location.reload();
 
         } catch (error) {
             UIManager.showErrorMessage(error.message);
