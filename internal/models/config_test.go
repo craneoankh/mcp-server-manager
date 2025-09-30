@@ -10,6 +10,16 @@ const (
 	testContext7GeminiID = "context7-gemini"
 )
 
+// findServer is a helper to locate an MCP server by name
+func findServer(servers []MCPServer, name string) *MCPServer {
+	for i := range servers {
+		if servers[i].Name == name {
+			return &servers[i]
+		}
+	}
+	return nil
+}
+
 func TestConfigStructure(t *testing.T) {
 	// Note: This test uses direct YAML unmarshaling, not the loader
 	// The loader uses custom logic to preserve order. This tests basic struct compatibility.
@@ -71,56 +81,59 @@ func TestConfigStructure(t *testing.T) {
 		t.Fatalf("Expected 2 clients, got %d", len(config.Clients))
 	}
 
-	// Check filesystem server (STDIO) - find by name in slice
-	var fs *MCPServer
-	for i := range config.MCPServers {
-		if config.MCPServers[i].Name == "filesystem" {
-			fs = &config.MCPServers[i]
-			break
-		}
-	}
+	// Check filesystem server (STDIO)
+	testFilesystemServer(t, config.MCPServers)
+
+	// Check context7 server (HTTP with type field)
+	testContext7Server(t, config.MCPServers)
+
+	// Check context7-gemini server (HTTP with httpUrl field)
+	testContext7GeminiServer(t, config.MCPServers)
+
+	// Check clients
+	testClaudeClient(t, config.Clients)
+	testGeminiClient(t, config.Clients)
+}
+
+func testFilesystemServer(t *testing.T, servers []MCPServer) {
+	t.Helper()
+	fs := findServer(servers, "filesystem")
 	if fs == nil {
 		t.Fatal("filesystem server not found")
 	}
 	if fs.Config["command"] != "npx" {
 		t.Errorf("filesystem command: got %v, want 'npx'", fs.Config["command"])
 	}
+}
 
-	// Check context7 server (HTTP with type field)
-	var ctx7 *MCPServer
-	for i := range config.MCPServers {
-		if config.MCPServers[i].Name == "context7" {
-			ctx7 = &config.MCPServers[i]
-			break
-		}
-	}
+func testContext7Server(t *testing.T, servers []MCPServer) {
+	t.Helper()
+	ctx7 := findServer(servers, "context7")
 	if ctx7 == nil {
 		t.Fatal("context7 server not found")
 	}
 	if ctx7.Config["type"] != "http" {
 		t.Errorf("context7 type: got %v, want 'http'", ctx7.Config["type"])
 	}
-	if ctx7.Config["url"] != "https://mcp.context7.com/mcp" {
-		t.Errorf("context7 url: got %v, want 'https://mcp.context7.com/mcp'", ctx7.Config["url"])
+	if ctx7.Config["url"] != testContext7URL {
+		t.Errorf("context7 url: got %v, want %q", ctx7.Config["url"], testContext7URL)
 	}
+}
 
-	// Check context7-gemini server (HTTP with httpUrl field)
-	var ctx7gem *MCPServer
-	for i := range config.MCPServers {
-		if config.MCPServers[i].Name == "context7-gemini" {
-			ctx7gem = &config.MCPServers[i]
-			break
-		}
-	}
+func testContext7GeminiServer(t *testing.T, servers []MCPServer) {
+	t.Helper()
+	ctx7gem := findServer(servers, testContext7GeminiID)
 	if ctx7gem == nil {
 		t.Fatal("context7-gemini server not found")
 	}
-	if ctx7gem.Config["httpUrl"] != "https://mcp.context7.com/mcp" {
-		t.Errorf("context7-gemini httpUrl: got %v, want 'https://mcp.context7.com/mcp'", ctx7gem.Config["httpUrl"])
+	if ctx7gem.Config["httpUrl"] != testContext7URL {
+		t.Errorf("context7-gemini httpUrl: got %v, want %q", ctx7gem.Config["httpUrl"], testContext7URL)
 	}
+}
 
-	// Check clients
-	claudeClient, exists := config.Clients["claude_code"]
+func testClaudeClient(t *testing.T, clients map[string]*Client) {
+	t.Helper()
+	claudeClient, exists := clients["claude_code"]
 	if !exists {
 		t.Fatal("claude_code client not found")
 	}
@@ -130,8 +143,11 @@ func TestConfigStructure(t *testing.T) {
 	if len(claudeClient.Enabled) != 2 {
 		t.Errorf("claude_code enabled: got %d servers, want 2", len(claudeClient.Enabled))
 	}
+}
 
-	geminiClient, exists := config.Clients["gemini_cli"]
+func testGeminiClient(t *testing.T, clients map[string]*Client) {
+	t.Helper()
+	geminiClient, exists := clients["gemini_cli"]
 	if !exists {
 		t.Fatal("gemini_cli client not found")
 	}
