@@ -27,21 +27,28 @@ import (
 // for a critical bug where only command/args were copied, losing fields like url,
 // headers, type, etc. This is essential for HTTP transport support.
 
-func TestReadClientConfig(t *testing.T) {
+// setupClientConfigTest creates a test environment with ClientConfigService
+func setupClientConfigTest(t *testing.T, servers []models.MCPServer, enabled []string) (*ClientConfigService, string) {
+	t.Helper()
 	tempDir := t.TempDir()
 	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
 
 	cfg := &models.Config{
-		MCPServers: []models.MCPServer{},
+		MCPServers: servers,
 		Clients: map[string]*models.Client{
 			"test_client": {
 				ConfigPath: clientConfigPath,
-				Enabled:    []string{},
+				Enabled:    enabled,
 			},
 		},
 	}
 
 	service := NewClientConfigService(cfg)
+	return service, clientConfigPath
+}
+
+func TestReadClientConfig(t *testing.T) {
+	service, clientConfigPath := setupClientConfigTest(t, []models.MCPServer{}, []string{})
 
 	t.Run("Read non-existent config", func(t *testing.T) {
 		rawConfig, err := service.ReadClientConfig("test_client")
@@ -107,20 +114,11 @@ func TestReadClientConfig(t *testing.T) {
 }
 
 func TestWriteClientConfig(t *testing.T) {
-	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, "subdir", testutil.TestClientJSON)
-
-	cfg := &models.Config{
-		MCPServers: []models.MCPServer{},
-		Clients: map[string]*models.Client{
-			"test_client": {
-				ConfigPath: clientConfigPath,
-				Enabled:    []string{},
-			},
-		},
-	}
-
-	service := NewClientConfigService(cfg)
+	service, clientConfigPath := setupClientConfigTest(t, []models.MCPServer{}, []string{})
+	// Override path with subdirectory to test directory creation
+	tempDir := filepath.Dir(clientConfigPath)
+	clientConfigPath = filepath.Join(tempDir, "subdir", testutil.TestClientJSON)
+	service.config.Clients["test_client"].ConfigPath = clientConfigPath
 
 	rawConfig := map[string]interface{}{
 		"mcpServers": map[string]interface{}{
@@ -164,20 +162,8 @@ func TestWriteClientConfig(t *testing.T) {
 }
 
 func TestBackupConfig(t *testing.T) {
-	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
-
-	cfg := &models.Config{
-		MCPServers: []models.MCPServer{},
-		Clients: map[string]*models.Client{
-			"test_client": {
-				ConfigPath: clientConfigPath,
-				Enabled:    []string{},
-			},
-		},
-	}
-
-	service := NewClientConfigService(cfg)
+	service, clientConfigPath := setupClientConfigTest(t, []models.MCPServer{}, []string{})
+	tempDir := filepath.Dir(clientConfigPath)
 
 	// Create initial config
 	initialData := map[string]interface{}{
@@ -235,31 +221,19 @@ func TestBackupConfig(t *testing.T) {
 }
 
 func TestUpdateMCPServerStatus(t *testing.T) {
-	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
-
-	cfg := &models.Config{
-		MCPServers: []models.MCPServer{
-			{
-				Name: testutil.TestServerName,
-				Config: map[string]interface{}{
-					"command": "npx",
-					"args":    []interface{}{"test"},
-					"env": map[string]interface{}{
-						"NODE_ENV": "production",
-					},
+	servers := []models.MCPServer{
+		{
+			Name: testutil.TestServerName,
+			Config: map[string]interface{}{
+				"command": "npx",
+				"args":    []interface{}{"test"},
+				"env": map[string]interface{}{
+					"NODE_ENV": "production",
 				},
 			},
 		},
-		Clients: map[string]*models.Client{
-			"test_client": {
-				ConfigPath: clientConfigPath,
-				Enabled:    []string{},
-			},
-		},
 	}
-
-	service := NewClientConfigService(cfg)
+	service, _ := setupClientConfigTest(t, servers, []string{})
 
 	t.Run("Enable server", func(t *testing.T) {
 		if err := service.UpdateMCPServerStatus("test_client", testutil.TestServerName, true); err != nil {
@@ -307,27 +281,15 @@ func TestUpdateMCPServerStatus(t *testing.T) {
 }
 
 func TestGetMCPServerStatus(t *testing.T) {
-	tempDir := t.TempDir()
-	clientConfigPath := filepath.Join(tempDir, testutil.TestClientJSON)
-
-	cfg := &models.Config{
-		MCPServers: []models.MCPServer{
-			{
-				Name: testutil.TestServerName,
-				Config: map[string]interface{}{
-					"command": "echo",
-				},
-			},
-		},
-		Clients: map[string]*models.Client{
-			"test_client": {
-				ConfigPath: clientConfigPath,
-				Enabled:    []string{testutil.TestServerName},
+	servers := []models.MCPServer{
+		{
+			Name: testutil.TestServerName,
+			Config: map[string]interface{}{
+				"command": "echo",
 			},
 		},
 	}
-
-	service := NewClientConfigService(cfg)
+	service, _ := setupClientConfigTest(t, servers, []string{testutil.TestServerName})
 
 	// Enable the server
 	service.UpdateMCPServerStatus("test_client", testutil.TestServerName, true)
