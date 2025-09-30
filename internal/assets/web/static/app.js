@@ -301,7 +301,7 @@ const ThemeManager = {
      * @returns {string} - 'light' or 'dark'
      */
     getSystemTheme() {
-        return globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches
+        return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches
             ? 'dark'
             : 'light';
     },
