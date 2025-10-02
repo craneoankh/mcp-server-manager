@@ -244,12 +244,23 @@ const ServerAPI = {
      * @returns {Promise<Object>} - API response
      */
     async submitNewServer(serverConfig) {
+        // Extract server name and prepare config for v2.0 API format
+        const serverName = serverConfig.name;
+        const { name, clients, ...config } = serverConfig;
+
+        // Wrap in v2.0 format: {mcpServers: {serverName: {config}}}
+        const requestBody = {
+            mcpServers: {
+                [serverName]: config
+            }
+        };
+
         const response = await fetch('/api/servers', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(serverConfig)
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
